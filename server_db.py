@@ -1,15 +1,4 @@
-"""Coding Masters 배포용 서버 (Render + Firebase Realtime Database).
 
-- 정적 파일(index.html 등) 서빙
-- /api/sync    GET/POST : 기존 server.py와 같은 주소/JSON 형태 (app.js 그대로 호환)
-- /api/version GET      : 변경 감지용 (app.js 폴링)
-- 저장소: Firebase Realtime Database (REST). FIREBASE_DB_URL 이 없으면 로컬 JSON 파일로 동작(테스트용)
-
-환경변수
-  PORT              Render가 자동 지정 (기본 5173)
-  FIREBASE_DB_URL   예: https://내프로젝트-default-rtdb.firebaseio.com
-  FIREBASE_AUTH     (선택) 데이터베이스 시크릿/토큰. 규칙을 잠갔을 때만 필요
-"""
 import http.server
 import json
 import os
@@ -133,6 +122,13 @@ def save_changes(changes):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def _is_template(code):
+    """기본 템플릿(줄 끝 공백만 다른 초기 시드 포함)인지 확인한다."""
+    def norm(s):
+        return "\n".join(line.rstrip() for line in s.strip().splitlines())
+    return norm(code) == norm(DEFAULT_CODE)
+
+
 def compute_changes(incoming, current):
     """받은 전체 데이터에서 실제로 저장해야 할 칸만 골라낸다."""
     changes = {}
@@ -148,7 +144,8 @@ def compute_changes(incoming, current):
             if code == old:
                 continue
             # 기본 템플릿이 이미 저장된 실제 풀이를 덮어쓰지 않도록 방지
-            if code == DEFAULT_CODE and old:
+            # (시드 데이터는 줄 끝 공백이 달라 == 비교로는 걸러지지 않으므로 정규화해서 비교)
+            if old and _is_template(code):
                 continue
             changes[f"{int(qid)}/{member}"] = code
     return changes

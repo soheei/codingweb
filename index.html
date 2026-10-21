@@ -73,7 +73,11 @@
         <i class="fa-solid fa-file-import"></i> 불러오기
       </button>
       <input type="file" id="file-import-input" accept=".json" style="display: none;">
-      
+
+      <button id="btn-open-notebook-modal" class="btn btn-secondary" title="선택한 사람의 풀이를 문제 번호 범위로 묶어 주피터 노트북(.ipynb)으로 내보냅니다">
+        <i class="fa-solid fa-book"></i> 노트북 내보내기
+      </button>
+
       <button id="btn-toggle-diff-mode" class="btn btn-accent">
         <i class="fa-solid fa-table-columns"></i> <span id="diff-mode-text">4인 전체 비교 모드</span>
       </button>
@@ -294,6 +298,43 @@
         </button>
         <button id="btn-save-firebase-url" class="btn btn-save">
           <i class="fa-solid fa-bolt"></i> <span>연결 & 즉시 동기화</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jupyter Notebook Export Modal -->
+  <div id="notebook-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-book" style="color: #f59e0b;"></i>
+          <span>주피터 노트북으로 내보내기</span>
+        </div>
+        <button id="btn-close-notebook-modal" class="btn-icon-xs" title="닫기"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="notebook-member">사람 선택</label>
+          <select id="notebook-member" class="text-input"></select>
+        </div>
+        <div class="form-group">
+          <label for="notebook-from">문제 번호 범위 (처음 ~ 끝)</label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="number" id="notebook-from" class="text-input" min="1" max="100" value="1">
+            <span>~</span>
+            <input type="number" id="notebook-to" class="text-input" min="1" max="100" value="100">
+          </div>
+        </div>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+          <input type="checkbox" id="notebook-skip-template" checked>
+          아직 풀지 않은 문제(기본 템플릿 코드)는 제외
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-notebook" class="btn btn-secondary">취소</button>
+        <button id="btn-confirm-notebook" class="btn btn-save">
+          <i class="fa-solid fa-file-arrow-down"></i> <span>내보내기</span>
         </button>
       </div>
     </div>
