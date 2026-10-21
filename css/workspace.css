@@ -1,0 +1,65 @@
+/* ==========================================================================
+   Workspace Area
+   ========================================================================== */
+.workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+/* Question Header Card */
+.question-card {
+  padding: 16px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.question-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-left h2 {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.q-badge {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+.q-num {
+  background: var(--bg-secondary);
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
+}
+
+.question-desc {
+  font-size: 0.88rem;
+  color: #4b5563;
+  line-height: 1.6;
+  white-space: pre-line;
+  max-height: 80px;
+  overflow-y: auto;
+}
+.question-desc code {
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: #2563eb;
+}

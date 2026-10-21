@@ -1,0 +1,152 @@
+/* ==========================================================================
+   Responsive: 화면/창 크기를 줄여도 버튼·글씨가 잘리거나 깨지지 않도록 보정
+   ========================================================================== */
+.btn, .btn-save-sm, .btn-xs, .btn-icon, .member-tab, .q-badge,
+.autosave-tag, .badge-team, .sync-status, .pyodide-status {
+  white-space: nowrap;
+}
+
+/* 헤더: 고정 높이 대신 내용에 맞춰 늘어나고, 넘치면 줄바꿈 */
+.app-header {
+  height: auto;
+  min-height: 64px;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 8px 24px;
+}
+.header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.main-container {
+  height: auto;
+  min-height: 0;
+}
+.sync-status .sync-text {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.brand-text h1 {
+  flex-wrap: wrap;
+}
+
+/* 에디터 상단 바 / 문제 카드 / 패널 헤더도 줄바꿈 허용 */
+.editor-header {
+  height: auto;
+  min-height: 46px;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.member-tabs {
+  min-height: 46px;
+  overflow-x: auto;
+}
+.member-tab {
+  flex-shrink: 0;
+}
+.editor-tools {
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 4px 0;
+}
+.question-card-header {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.header-left {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.header-left h2 {
+  overflow-wrap: anywhere;
+}
+.panel-section-header {
+  height: auto;
+  min-height: 36px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.panel-section-header .sec-title {
+  white-space: normal;
+  min-width: 0;
+}
+.input-panel-section {
+  height: auto;
+  min-height: 200px;
+}
+.terminal-placeholder {
+  display: block;
+  line-height: 1.9;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.modal-card {
+  max-width: 92vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 1180px) {
+  .subtitle { display: none; }
+  .btn { padding: 6px 10px; }
+  .sidebar-questions { width: 260px; }
+  .sync-status .sync-text { max-width: 140px; }
+}
+
+/* 좁은 화면: 세로로 쌓고 페이지 전체를 스크롤 */
+@media (max-width: 860px) {
+  html, body {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+  .app-header {
+    position: sticky;
+    top: 0;
+    justify-content: center;
+    padding: 8px 12px;
+  }
+  .header-actions { justify-content: center; }
+  .main-container {
+    flex-direction: column;
+    overflow: visible;
+  }
+  .sidebar-questions {
+    width: 100%;
+    max-height: 320px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .workspace { overflow: visible; }
+  .question-card { padding: 12px 14px; }
+  .editor-workspace { flex: none; overflow: visible; }
+  .editor-grid {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+  .code-editor-wrapper {
+    height: 380px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .terminal-panel { height: auto; }
+  .output-panel-section { min-height: 220px; }
+  .diff-workspace { overflow: visible; }
+  .diff-header-bar {
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 12px;
+  }
+  .quad-diff-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-rows: 340px;
+    overflow: visible;
+  }
+}

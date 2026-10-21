@@ -1,0 +1,99 @@
+/* ==========================================================================
+   Standard Editor & Terminal
+   ========================================================================== */
+.editor-workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-header {
+  height: 46px;
+  background: #fbf9f4;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.member-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+.member-tab {
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  background: transparent;
+}
+.member-tab:hover {
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.03);
+}
+.member-tab.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  font-weight: 600;
+  background: #ffffff;
+}
+
+.editor-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.autosave-tag {
+  font-size: 0.75rem;
+  color: var(--success-color);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.editor-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  overflow: hidden;
+}
+
+.code-editor-wrapper {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: #ffffff;
+  border-right: 1px solid var(--border-color);
+}
+
+/* Clean Editor CodeMirror (Pure White Background, Crisp Black Text) */
+.CodeMirror {
+  height: 100% !important;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+.CodeMirror-gutters {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e5e7eb !important;
+}
+.CodeMirror-linenumber {
+  color: #9ca3af !important;
+}
+.CodeMirror-cursor {
+  border-left: 2px solid #000000 !important;
+}

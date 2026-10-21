@@ -51,10 +51,9 @@ print(a + b)
 STATIC_FILES = {
     "/": "index.html",
     "/index.html": "index.html",
-    "/app.js": "app.js",
-    "/questions.js": "questions.js",
-    "/style.css": "style.css",
 }
+# js/, css/ 폴더 아래 정적 파일만 허용 (상위 경로 접근 차단)
+STATIC_DIRS = ("js", "css")
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "application/javascript; charset=utf-8",
@@ -174,6 +173,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def _json(self, status, obj):
         self._send(status, json.dumps(obj, ensure_ascii=False).encode("utf-8"))
 
+    def _is_static_asset(self, path):
+        parts = path.lstrip("/").split("/")
+        if len(parts) < 2 or parts[0] not in STATIC_DIRS or ".." in parts:
+            return False
+        full = os.path.join(BASE_DIR, *parts)
+        return os.path.splitext(full)[1] in CONTENT_TYPES and os.path.isfile(full)
+
     def do_OPTIONS(self):
         self._send(204)
 
@@ -189,8 +195,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._json(200, {"version": f"{_version_prefix}-{_version_counter}"})
         elif path == "/healthz":
             self._send(200, b"ok", "text/plain")
-        elif path in STATIC_FILES:
-            name = STATIC_FILES[path]
+        elif path in STATIC_FILES or self._is_static_asset(path):
+            name = STATIC_FILES.get(path) or path.lstrip("/")
             with open(os.path.join(BASE_DIR, name), "rb") as f:
                 body = f.read()
             self._send(200, body, CONTENT_TYPES[os.path.splitext(name)[1]])

@@ -1,0 +1,221 @@
+/* ==========================================================================
+   Interactive Input (sys.stdin) & Terminal Output Split Panel (Pure White & Black)
+   ========================================================================== */
+.terminal-panel {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff !important;
+  overflow: hidden;
+  height: 100%;
+}
+
+.panel-section-header {
+  height: 36px;
+  background: #f9fafb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #111827 !important;
+}
+
+.input-panel-section {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 2px solid #e5e7eb !important;
+  background: #ffffff !important;
+}
+
+.input-body {
+  flex: 1;
+  padding: 8px 12px;
+  display: flex;
+  background: #ffffff !important;
+}
+
+#user-custom-input {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #d1d5db !important;
+  border-radius: var(--radius-sm);
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  padding: 8px 10px;
+  outline: none;
+  resize: none;
+}
+#user-custom-input:focus {
+  border-color: #2563eb !important;
+  background: #ffffff !important;
+}
+
+.input-hint {
+  padding: 6px 14px;
+  font-size: 0.72rem;
+  color: #4b5563 !important;
+  background: #ffffff !important;
+  border-top: 1px solid #f3f4f6 !important;
+}
+.input-hint code {
+  color: #2563eb;
+  font-weight: 600;
+  background: #eff6ff;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* Execution Output Console (Pure White Background, Crisp Black Text) */
+.output-panel-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff !important;
+}
+
+.output-panel-section .panel-section-header {
+  background: #f9fafb !important;
+  color: #111827 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.terminal-body {
+  flex: 1;
+  padding: 12px 14px;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  font-family: var(--font-mono);
+  font-size: 0.90rem;
+  line-height: 1.6;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.terminal-placeholder {
+  color: #6b7280 !important;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.terminal-placeholder code {
+  background: #f3f4f6;
+  color: #2563eb;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.terminal-line {
+  margin-bottom: 4px;
+  white-space: pre-wrap;
+  color: #000000 !important;
+}
+
+.terminal-line.stdout {
+  color: #000000 !important;
+  font-weight: 500;
+}
+
+.terminal-line.error {
+  color: #dc2626 !important;
+  font-weight: 600;
+  background: #fef2f2 !important;
+  border-left: 3px solid #ef4444;
+  padding: 6px 8px;
+  border-radius: 2px;
+}
+
+.terminal-line.system {
+  color: #4b5563 !important;
+  font-style: italic;
+}
+
+.time-badge {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.btn-xs {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: #ffffff;
+}
+.btn-xs:hover {
+  background: #f1f5f9;
+}
+
+/* Test Cases UI */
+.testcases-panel {
+  height: 200px;
+  border-top: 1px solid var(--border-color);
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.testcases-header {
+  padding: 8px 14px;
+  background: #f5f2eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.testcases-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tc-card {
+  background: #faf8f5;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tc-info {
+  display: flex;
+  gap: 12px;
+}
+.tc-label {
+  color: var(--text-muted);
+}
+.tc-val {
+  font-family: var(--font-mono);
+  color: #2563eb;
+}
+.tc-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.tc-badge.pass { background: #dcfce7; color: #16a34a; }
+.tc-badge.fail { background: #fee2e2; color: #dc2626; }
+.tc-badge.idle { background: #f1f5f9; color: #64748b; }

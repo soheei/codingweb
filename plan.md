@@ -1,7 +1,7 @@
 # Coding Masters 배포 / DB 구축 계획
 
 > 목표: 여러 명이 웹사이트에서 풀이를 등록하고, 모두가 실시간으로 볼 수 있게 서버 + DB를 배포한다.
-> 원칙: **기존 코드(app.js, index.html, style.css, questions.js)는 최대한 수정하지 않는다.**
+> 
 
 ---
 
