@@ -129,7 +129,7 @@ def _is_template(code):
     return norm(code) == norm(DEFAULT_CODE)
 
 
-def compute_changes(incoming, current):
+def compute_changes(incoming, current, allow_template=False):
     """받은 전체 데이터에서 실제로 저장해야 할 칸만 골라낸다."""
     changes = {}
     if not isinstance(incoming, dict):
@@ -145,7 +145,8 @@ def compute_changes(incoming, current):
                 continue
             # 기본 템플릿이 이미 저장된 실제 풀이를 덮어쓰지 않도록 방지
             # (시드 데이터는 줄 끝 공백이 달라 == 비교로는 걸러지지 않으므로 정규화해서 비교)
-            if old and _is_template(code):
+            # (사용자가 초기화 버튼을 눌러 reset=1 로 보낸 경우는 예외)
+            if old and _is_template(code) and not allow_template:
                 continue
             changes[f"{int(qid)}/{member}"] = code
     return changes
@@ -198,7 +199,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         global _version_counter
-        path = urllib.parse.urlparse(self.path).path
+        parsed = urllib.parse.urlparse(self.path)
+        path = parsed.path
+        is_reset = urllib.parse.parse_qs(parsed.query).get("reset") == ["1"]
         if path not in ("/api/sync", "/api/save"):
             self._send(404, b"not found", "text/plain")
             return
@@ -209,7 +212,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return
             incoming = json.loads(self.rfile.read(length).decode("utf-8"))
             with _lock:
-                changes = compute_changes(incoming, load_all())
+                changes = compute_changes(incoming, load_all(), allow_template=is_reset)
                 save_changes(changes)
                 if changes:
                     _version_counter += 1

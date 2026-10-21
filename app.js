@@ -194,7 +194,8 @@ function handleEditorChange() {
 
 // 실제 저장 실행 (isManual: 수동 저장 버튼 클릭 여부)
 // saveAll=false(기본): 현재 선택된 사람(탭)의 풀이만 서버에 보낸다. (다른 사람 칸을 덮어쓰지 않기 위함)
-async function executeSave(isManual = false, saveAll = false) {
+// resetCurrent=true: 현재 문제/사람의 풀이만 기본 코드로 되돌려 서버에 반영 (서버의 템플릿 덮어쓰기 방지 규칙 우회)
+async function executeSave(isManual = false, saveAll = false, resetCurrent = false) {
   if (STATE.saveTimer) clearTimeout(STATE.saveTimer);
   updateSaveStatus("saving");
 
@@ -225,14 +226,16 @@ async function executeSave(isManual = false, saveAll = false) {
   // 3. 로컬 파이썬 서버에 영구 파일 저장 시도 (team_solutions_db.json)
   try {
     let serverPayload = STATE.solutions;
-    if (!saveAll) {
+    if (resetCurrent) {
+      serverPayload = { [STATE.currentQuestionId]: { [STATE.currentMember]: DEFAULT_CODE } };
+    } else if (!saveAll) {
       serverPayload = {};
       Object.keys(STATE.solutions).forEach(qId => {
         const code = STATE.solutions[qId] && STATE.solutions[qId][STATE.currentMember];
         if (typeof code === "string") serverPayload[qId] = { [STATE.currentMember]: code };
       });
     }
-    const serverRes = await fetch(LOCAL_SERVER_API, {
+    const serverRes = await fetch(resetCurrent ? `${LOCAL_SERVER_API}?reset=1` : LOCAL_SERVER_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(serverPayload)
@@ -1139,7 +1142,7 @@ function setupEventListeners() {
   document.getElementById("btn-reset-template").addEventListener("click", () => {
     if (confirm("코드를 기본 디폴트 상태로 되돌리시겠습니까?")) {
       STATE.editor.setValue(DEFAULT_CODE);
-      executeSave(true);
+      executeSave(true, false, true);
     }
   });
 
