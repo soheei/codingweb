@@ -35,7 +35,7 @@ const STATE = {
   isPyodideReady: false,
   editor: null,
   saveTimer: null,
-  isAutoSaveEnabled: true,
+  isAutoSaveEnabled: false,
   hasUnsavedChanges: false,
   isSyncing: false,
   lastSavedAt: null,
@@ -72,11 +72,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   setupFirebaseModal();
 
-  // 6. 실시간 클라우드 브로드캐스트 수신(SSE) 시작
-  setupRealtimeCloudSync();
-
-  // 7. 배포 서버(server_db.py) 변경 감지 폴링
-  setupServerPolling();
+  // 6~7. 실시간 수신(SSE)/폴링은 사용하지 않음: 팀원의 새 풀이는 새로고침/재접속 시 서버에서 불러온다.
+  // setupRealtimeCloudSync();
+  // setupServerPolling();
 });
 
 function getFirebaseEndpoint() {
