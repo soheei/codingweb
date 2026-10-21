@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coding Masters 100 - 김민희 • 양소희 • 정호준 • 차승우 실시간 스튜디오</title>
+  
+  <!-- Google Fonts: Inter & Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- CodeMirror for Python Code Editor -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/merge/merge.min.css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/merge/merge.min.js"></script>
+  
+  <!-- Pyodide: In-Browser Python 3 Engine (WebAssembly) -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+  
+  <link rel="stylesheet" href="style.css?v=20261020_02">
+</head>
+<body class="ivory-theme">
+  <!-- Top Global Header -->
+  <header class="app-header">
+    <div class="logo-area">
+      <div class="brand-icon"><i class="fa-brands fa-python"></i></div>
+      <div class="brand-text">
+        <h1>Coding Masters 100 <span class="badge-team">4인 실시간 스터디</span></h1>
+        <p class="subtitle">김민희 • 양소희 • 정호준 • 차승우 실시간 클라우드 동기화 허브</p>
+      </div>
+    </div>
+
+    <!-- Global Actions & Cloud Sync Status -->
+    <div class="header-actions">
+      <!-- Real Cloud Sync Status -->
+      <div class="sync-status" id="sync-status-box" title="로컬 서버(team_solutions_db.json) 및 전 세계 실시간 클라우드 동기화 상태">
+        <span class="status-dot ready" id="sync-dot"></span>
+        <span class="sync-text" id="sync-text">동기화 연결 준비</span>
+        <button id="btn-sync-now" class="btn-icon-xs" title="지금 최신 동기화 가져오기"><i class="fa-solid fa-arrows-rotate"></i></button>
+      </div>
+
+      <div class="pyodide-status" id="pyodide-status" title="브라우저 내장 Python 엔진 준비 상태">
+        <span class="status-dot loading"></span>
+        <span class="status-text">Python 준비 중...</span>
+      </div>
+
+      <!-- Explicit Manual Save Button (Always Available) -->
+      <button id="btn-manual-save" class="btn btn-save" title="모든 변경사항을 서버 파일과 클라우드에 지금 즉시 수동 저장합니다 (Ctrl + S)">
+        <i class="fa-solid fa-floppy-disk"></i> <span>수동 저장</span>
+      </button>
+
+      <button id="btn-toggle-autosave" class="btn btn-secondary active-toggle" title="자동 저장 모드 켜기/끄기">
+        <i class="fa-solid fa-bolt"></i> <span id="autosave-toggle-text">자동저장 ON</span>
+      </button>
+
+      <button id="btn-open-firebase-modal" class="btn btn-firebase" title="GitHub Pages에서 서버 없이 100% 영구 자동 저장을 지원하는 Firebase 무료 클라우드 설정">
+        <i class="fa-solid fa-fire"></i> <span id="firebase-btn-label">Firebase 연동</span>
+      </button>
+
+      <button id="btn-export-data" class="btn btn-secondary" title="현재 100문제 4인 전체 풀이를 team_solutions_db.json 파일로 즉시 다운로드합니다">
+        <i class="fa-solid fa-file-export"></i> 백업(다운로드)
+      </button>
+      <button id="btn-import-data" class="btn btn-secondary" title="team_solutions_db.json 파일을 선택해 불러옵니다">
+        <i class="fa-solid fa-file-import"></i> 불러오기
+      </button>
+      <input type="file" id="file-import-input" accept=".json" style="display: none;">
+      
+      <button id="btn-toggle-diff-mode" class="btn btn-accent">
+        <i class="fa-solid fa-table-columns"></i> <span id="diff-mode-text">4인 전체 비교 모드</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main 3-Column Layout -->
+  <div class="main-container">
+    
+    <!-- LEFT: Question Navigator (1 to 100) -->
+    <aside class="sidebar-questions">
+      <div class="sidebar-header">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="question-search" placeholder="문제 번호, 제목, 키워드 검색...">
+        </div>
+        <div class="filter-row">
+          <select id="filter-difficulty" class="dropdown">
+            <option value="all">모든 난이도</option>
+            <option value="기초">기초</option>
+            <option value="초급">초급</option>
+            <option value="중급">중급</option>
+            <option value="고급">고급</option>
+          </select>
+          <select id="filter-category" class="dropdown">
+            <option value="all">모든 분류</option>
+          </select>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-labels">
+            <span>스터디 완료율: <strong id="progress-percent">0%</strong></span>
+            <span id="progress-count">0 / 100 완료</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question List Items -->
+      <div class="question-list" id="question-list">
+        <!-- Rendered dynamically via JS -->
+      </div>
+    </aside>
+
+    <!-- CENTER & RIGHT: Workspace -->
+    <main class="workspace">
+      
+      <!-- TOP: Question Details Card -->
+      <section class="question-card">
+        <div class="question-card-header">
+          <div class="header-left">
+            <span class="q-badge q-num" id="current-q-num">Q. 01</span>
+            <h2 id="current-q-title">10배</h2>
+            <span class="q-badge q-diff" id="current-q-diff">기초</span>
+            <span class="q-badge q-cat" id="current-q-cat">기초 문법</span>
+          </div>
+          <div class="header-right">
+            <button id="btn-reset-template" class="btn-icon" title="기본 디폴트 코드로 초기화">
+              <i class="fa-solid fa-rotate-left"></i> 초기화
+            </button>
+          </div>
+        </div>
+        <div class="question-desc" id="current-q-desc">
+          <!-- Problem Description -->
+        </div>
+      </section>
+
+      <!-- VIEW 1: Standard Single-Tab Editor & Interactive Input/Output Panel -->
+      <section class="editor-workspace" id="standard-view">
+        <div class="editor-header">
+          <!-- 4 Fixed Member Selection Tabs -->
+          <div class="member-tabs" id="member-tabs">
+            <!-- Fixed 4 Member Tabs Rendered via JS -->
+          </div>
+          
+          <div class="editor-tools">
+            <span class="autosave-tag" id="autosave-status"><i class="fa-solid fa-circle-check"></i> 로컬 & 서버 저장됨</span>
+            <button id="btn-editor-save" class="btn btn-save-sm" title="코드 수동 저장 (Ctrl + S)">
+              <i class="fa-solid fa-floppy-disk"></i> 저장 (Ctrl+S)
+            </button>
+            <button id="btn-run-code" class="btn btn-primary" title="Python 코드 실행 (Ctrl + Enter)">
+              <i class="fa-solid fa-play"></i> 코드 실행 (Run)
+            </button>
+          </div>
+        </div>
+
+        <!-- Split Grid: Editor (Left) & Input/Output Panel (Right) -->
+        <div class="editor-grid">
+          <div class="code-editor-wrapper">
+            <textarea id="code-editor"></textarea>
+          </div>
+
+          <div class="terminal-panel">
+            
+            <!-- SECTION 1: Interactive User Input (sys.stdin / input()) -->
+            <div class="input-panel-section">
+              <div class="panel-section-header">
+                <span class="sec-title"><i class="fa-solid fa-keyboard"></i> 사용자 직접 입력값 (sys.stdin / input)</span>
+                <div class="input-quick-tools">
+                  <button id="btn-load-sample-input" class="btn-xs btn-secondary" title="이 문제의 예제 입력을 자동으로 채웁니다">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> 예제 입력 채우기
+                  </button>
+                  <button id="btn-clear-input" class="btn-icon-xs" title="입력창 지우기"><i class="fa-solid fa-eraser"></i></button>
+                </div>
+              </div>
+              <div class="input-body">
+                <textarea id="user-custom-input" placeholder="여기에 입력할 값을 자유롭게 적으세요 (줄바꿈 지원)&#10;예:&#10;3&#10;5" spellcheck="false">3
+5</textarea>
+              </div>
+              <div class="input-hint">
+                💡 파이썬 코드의 <code>sys.stdin.readline()</code> 또는 <code>input()</code>이 위 입력값을 순서대로 읽습니다.
+              </div>
+            </div>
+
+            <!-- SECTION 2: Execution Output Console -->
+            <div class="output-panel-section">
+              <div class="panel-section-header">
+                <span class="sec-title"><i class="fa-solid fa-terminal"></i> 실행 결과 (Output)</span>
+                <div class="term-actions">
+                  <span id="run-time-badge" class="time-badge" style="display: none;">0ms</span>
+                  <button id="btn-clear-term" class="btn-icon-xs" title="콘솔 지우기"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+              </div>
+              
+              <div class="terminal-body" id="terminal-output">
+                <div class="terminal-placeholder">
+                  <i class="fa-solid fa-circle-info"></i> 상단의 [코드 실행] 버튼 또는 <code>Ctrl + Enter</code>를 누르면 위 입력값을 바탕으로 코드가 실행됩니다.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: 4-Member ALL Comparison View -->
+      <section class="diff-workspace" id="diff-view" style="display: none;">
+        <div class="diff-header-bar">
+          <div class="diff-title-badge">
+            <i class="fa-solid fa-users"></i> 4인 전원 코드 동시 비교 뷰 (Quad-Comparison)
+          </div>
+          <div class="diff-actions">
+            <button id="btn-run-all-members" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-play"></i> 4명 코드 동시 검증
+            </button>
+          </div>
+        </div>
+
+        <!-- 4-Split Grid for All 4 Members -->
+        <div class="quad-diff-grid" id="quad-diff-container">
+          <!-- 4 Panels Rendered Dynamically via JS -->
+        </div>
+
+        <div class="diff-footer-info">
+          <div class="diff-hint">
+            💡 김민희 • 양소희 • 정호준 • 차승우 4명의 코드가 한눈에 실시간으로 표시됩니다. 각 카드에서 바로 실행하거나 수정할 수 있습니다.
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast Notification Modal -->
+  <div id="toast" class="toast">알림 메시지</div>
+
+  <!-- Firebase Cloud Setup Modal -->
+  <div id="firebase-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-fire" style="color: #f97316;"></i>
+          <span>Firebase 무료 실시간 클라우드 DB 연동</span>
+        </div>
+        <button id="btn-close-firebase-modal" class="btn-icon-xs" title="닫기"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-tip-box">
+          <div class="tip-title"><i class="fa-solid fa-circle-info"></i> GitHub Pages 완벽 지원</div>
+          <p>서버 실행(server.py) 없이도 <strong>GitHub Pages 링크만으로 전 세계 어디서나 4명의 풀이를 100% 영구 자동 저장</strong>하고 실시간으로 공유할 수 있습니다.</p>
+        </div>
+
+        <div class="setup-steps">
+          <div class="step-item">
+            <span class="step-num">1</span>
+            <div class="step-desc">
+              <a href="https://console.firebase.google.com" target="_blank" class="step-link">Firebase 콘솔 (링크)</a>에 구글 로그인 후 <strong>[프로젝트 만들기]</strong>를 누릅니다 (프로젝트명: 자유롭게).
+            </div>
+          </div>
+          <div class="step-item">
+            <span class="step-num">2</span>
+            <div class="step-desc">
+              왼쪽 메뉴의 <strong>[빌드] → [Realtime Database]</strong>를 클릭하고 <strong>[데이터베이스 만들기]</strong>를 누릅니다 (보안 규칙: <strong>테스트 모드에서 시작</strong> 선택).
+            </div>
+          </div>
+          <div class="step-item">
+            <span class="step-num">3</span>
+            <div class="step-desc">
+              데이터베이스 상단에 표시되는 <strong>URL</strong> (예: <code>https://프로젝트명-default-rtdb.firebaseio.com</code>)을 복사하여 아래에 붙여넣고 [연결 저장]을 누르면 즉시 동기화됩니다!
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="firebase-url-input">Firebase Realtime Database URL</label>
+          <div class="input-with-button">
+            <input type="text" id="firebase-url-input" placeholder="https://내프로젝트-default-rtdb.firebaseio.com" spellcheck="false">
+          </div>
+          <div class="input-hint" id="firebase-status-hint">
+            💡 URL 입력 후 [연결 & 즉시 동기화]를 누르면 다른 컴퓨터/브라우저에서도 이 URL을 통해 완전히 동기화됩니다.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-disconnect-firebase" class="btn btn-secondary">
+          <i class="fa-solid fa-link-slash"></i> 연결 해제
+        </button>
+        <button id="btn-save-firebase-url" class="btn btn-save">
+          <i class="fa-solid fa-bolt"></i> <span>연결 & 즉시 동기화</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Questions Dataset fallback for non-module compatibility -->
+  <script src="questions.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

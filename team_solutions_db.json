@@ -1,0 +1,602 @@
+{
+  "1": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": " import sys\n    \n num = int(input())\n print(num * 10)"
+  },
+  "2": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "3": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "4": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "5": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "6": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "7": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "8": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "9": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "10": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "11": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "12": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "13": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "14": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "15": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "16": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "17": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "18": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "19": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "20": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "21": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "22": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "23": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "24": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "25": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "26": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "27": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "28": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "29": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "30": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "31": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "32": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "33": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "34": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "35": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "36": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "37": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "38": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "39": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "40": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "41": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "42": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "43": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "44": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "45": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "46": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "47": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "48": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "49": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "50": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "51": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "52": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "53": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "54": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "55": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "56": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "57": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "58": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "59": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "60": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "61": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "62": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "63": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "64": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "65": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "66": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "67": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "68": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "69": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "70": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "71": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "72": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "73": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "74": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "75": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "76": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "77": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "78": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "79": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "80": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "81": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "82": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "83": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "84": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "85": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "86": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "87": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "88": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "89": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "90": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "91": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "92": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "93": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "94": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "95": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "96": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "97": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "98": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "99": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  },
+  "100": {
+    "김민희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "양소희": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "정호준": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n",
+    "차승우": "import sys \n\na = int(sys.stdin.readline()) \nb = int(sys.stdin.readline())\n\nprint(a + b)\n"
+  }
+}

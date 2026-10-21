@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: codingmasters
+    runtime: python
+    plan: free
+    buildCommand: echo "no dependencies"
+    startCommand: python server_db.py
+    healthCheckPath: /healthz
+    envVars:
+      - key: FIREBASE_DB_URL
+        sync: false
