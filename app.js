@@ -40,7 +40,7 @@ const STATE = {
   isSyncing: false,
   lastSavedAt: null,
   clientId: "client_" + Math.random().toString(36).substring(2, 9),
-  firebaseUrl: localStorage.getItem(STORAGE_KEY_FIREBASE) || "",
+  firebaseUrl: "", // 배포 서버(server_db.py)가 Firebase를 대신 사용하므로 브라우저 직접 연동은 쓰지 않음
   firebaseEventSource: null
 };
 
@@ -72,9 +72,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   setupFirebaseModal();
 
-  // 6~7. 실시간 수신(SSE)/폴링은 사용하지 않음: 팀원의 새 풀이는 새로고침/재접속 시 서버에서 불러온다.
+  // 6. ntfy 수신(SSE)은 사용하지 않음 (서버 폴링으로 대체)
   // setupRealtimeCloudSync();
-  // setupServerPolling();
+
+  // 7. 배포 서버(server_db.py) 변경 감지 폴링: 팀원이 저장하면 새로고침 없이 반영
+  setupServerPolling();
 });
 
 function getFirebaseEndpoint() {
@@ -266,10 +268,11 @@ async function executeSave(isManual = false) {
   let statusMsg = "저장 완료";
   if (firebaseSaved) {
     statusMsg = "🔥 Firebase 클라우드에 영구 저장 완료 (GitHub Pages 동기화)";
-  } else if (serverSaved && cloudBroadcasted) {
-    statusMsg = "로컬 서버 파일 & 실시간 클라우드 영구 저장 완료";
   } else if (serverSaved) {
-    statusMsg = "로컬 서버 파일(team_solutions_db.json)에 저장 완료";
+    const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+    statusMsg = isLocalHost
+      ? "내 컴퓨터 서버(localhost)에 저장 완료 (배포 서버 아님)"
+      : "배포 서버(Firebase)에 저장 완료";
   } else if (cloudBroadcasted) {
     statusMsg = "실시간 클라우드 & 로컬 저장소에 저장 완료";
   } else {
