@@ -782,6 +782,8 @@ function renderMemberTabs() {
       STATE.currentMember = member;
       renderMemberTabs();
       loadCurrentMemberCode();
+      renderSidebarQuestions();
+      updateProgress();
     });
     container.appendChild(tab);
   });
@@ -803,10 +805,7 @@ function renderSidebarQuestions() {
   });
 
   filtered.forEach(q => {
-    const isSolved = FIXED_MEMBERS.some(m => {
-      const code = STATE.solutions[q.id] && STATE.solutions[q.id][m];
-      return code && code.trim() !== "" && code !== DEFAULT_CODE;
-    });
+    const isSolved = isSolvedByCurrentMember(q.id);
 
     const item = document.createElement("div");
     item.className = `q-item ${q.id === STATE.currentQuestionId ? "active" : ""}`;
@@ -846,15 +845,17 @@ function renderCategoryFilter() {
   });
 }
 
+function isSolvedByCurrentMember(qId) {
+  const code = STATE.solutions[qId] && STATE.solutions[qId][STATE.currentMember];
+  return !!code && code.trim() !== "" && code !== DEFAULT_CODE;
+}
+
 function updateProgress() {
   let solvedCount = 0;
   STATE.questions.forEach(q => {
-    const isSolved = FIXED_MEMBERS.some(m => {
-      const code = STATE.solutions[q.id] && STATE.solutions[q.id][m];
-      return code && code.trim() !== "" && code !== DEFAULT_CODE;
-    });
-    if (isSolved) solvedCount++;
+    if (isSolvedByCurrentMember(q.id)) solvedCount++;
   });
+  document.getElementById("progress-label").textContent = `${STATE.currentMember} 완료율:`;
 
   const percent = Math.round((solvedCount / (STATE.questions.length || 100)) * 100);
   document.getElementById("progress-percent").textContent = `${percent}%`;
