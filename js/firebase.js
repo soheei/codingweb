@@ -141,7 +141,7 @@ export function setupFirebaseModal() {
         if (hint) hint.innerHTML = `<span style="color: #10b981; font-weight: 600;">✓ Firebase 클라우드가 성공적으로 연결되었습니다!</span>`;
         setTimeout(() => { modal.style.display = "none"; }, 900);
       } else {
-        throw new Error(`HTTP 상태코드 ${testRes.status} (Firebase 데이터베이스 보안 규칙을 '테스트 모드: read, write true'로 설정했는지 확인하세요)`);
+        throw new Error(`HTTP 상태코드 ${testRes.status} (보안 규칙이 클라이언트 접근을 차단 중입니다. 저장은 서버(server_db.py)를 통해 이뤄집니다)`);
       }
     } catch (err) {
       alert("Firebase 연결 실패: " + err.message);
