@@ -1,5 +1,5 @@
 import { DEFAULT_CODE, FIXED_MEMBERS, STATE } from './config.js';
-import { loadCurrentMemberCode } from './navigation.js';
+import { loadCurrentMemberCode, saveViewState } from './navigation.js';
 import { executeSave, updateSaveStatus } from './storage.js';
 import { showToast } from './ui.js';
 
@@ -29,6 +29,7 @@ export function toggleDiffMode() {
     loadCurrentMemberCode();
     setTimeout(() => STATE.editor.refresh(), 50);
   }
+  saveViewState();
 }
 
 export function renderQuadDiffView() {
