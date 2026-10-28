@@ -90,14 +90,45 @@
   overflow-y: auto;
 }
 
+.col-resizer { display: none; }
+
 /* 데스크톱 3단 배치: 왼쪽 문제 설명 | 가운데 에디터(위)+실행 결과(아래) | 오른쪽 문제 목록 */
 @media (min-width: 861px) {
   .main-container {
     display: grid;
-    grid-template-columns: minmax(280px, 30%) minmax(0, 1fr) clamp(260px, 20vw, 360px);
+    grid-template-columns: var(--left-w, minmax(280px, 30%)) minmax(0, 1fr) var(--right-w, clamp(260px, 20vw, 360px));
     grid-template-rows: minmax(0, 1fr);
     background-color: var(--bg-primary);
+    position: relative;
   }
+
+  /* 열 경계 드래그 핸들 */
+  .col-resizer {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 9px;
+    z-index: 20;
+    cursor: col-resize;
+    touch-action: none;
+  }
+  .col-resizer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 4px;
+    width: 2px;
+    background: transparent;
+    transition: background 0.15s;
+  }
+  .col-resizer:hover::after,
+  .col-resizer.dragging::after { background: #2563eb; }
+  .col-resizer-left  { left: calc(var(--left-w, 30%) - 4px); }
+  .col-resizer-right { right: calc(var(--right-w, 20vw) - 5px); }
+  body.col-resizing { cursor: col-resize; user-select: none; }
+  body.col-resizing * { cursor: col-resize !important; }
   .workspace { display: contents; }
 
   /* 왼쪽: 문제 설명 */
