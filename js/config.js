@@ -20,6 +20,7 @@ export const isTemplateCode = (code) => normalizeCode(code) === normalizeCode(DE
 
 export const STORAGE_KEY_SOLUTIONS = "codingmasters_solutions_v5";
 export const STORAGE_KEY_FIREBASE = "codingmasters_firebase_url_v1";
+export const STORAGE_KEY_VIEW = "codingmasters_view_v1";
 
 export const STATE = {
   questions: [],

@@ -1,10 +1,12 @@
 import { generateAll100Questions } from './questions.js';
 import { STATE } from './config.js';
+import { toggleDiffMode } from './compare.js';
 import { initCodeMirror } from './editor.js';
 import { setupEventListeners } from './events.js';
 import { setupFirebaseModal } from './firebase.js';
-import { loadQuestion, renderCategoryFilter, renderSidebarQuestions, updateProgress } from './navigation.js';
+import { loadQuestion, loadViewState, renderCategoryFilter, renderSidebarQuestions, updateProgress } from './navigation.js';
 import { setupNotebookExport } from './notebook.js';
+import { setupColumnResizers } from './resizer.js';
 import { initPyodide } from './runner.js';
 import { loadInitialSolutions } from './storage.js';
 import { setupServerPolling } from './sync.js';
@@ -31,13 +33,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadInitialSolutions();
   renderSidebarQuestions();
 
-  // 4. 1번 문제 로드
-  loadQuestion(1);
+  // 4. 마지막으로 보던 문제/팀원 탭 복원 (없으면 1번 문제)
+  const savedView = loadViewState();
+  if (savedView) STATE.currentMember = savedView.member;
+  loadQuestion(savedView ? savedView.questionId : 1);
+  renderSidebarQuestions();
+  updateProgress();
+  document.querySelector(".q-item.active")?.scrollIntoView({ block: "center" });
+  if (savedView?.isDiffMode) toggleDiffMode();
 
   // 5. 이벤트 리스너 세팅
   setupEventListeners();
   setupFirebaseModal();
   setupNotebookExport();
+  setupColumnResizers();
 
   // 6. 배포 서버(server_db.py) 변경 감지 폴링: 팀원이 저장하면 새로고침 없이 반영
   setupServerPolling();

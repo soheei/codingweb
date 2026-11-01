@@ -1,6 +1,33 @@
 import { renderQuadDiffView } from './compare.js';
-import { DEFAULT_CODE, FIXED_MEMBERS, STATE, isTemplateCode } from './config.js';
+import { DEFAULT_CODE, FIXED_MEMBERS, STATE, STORAGE_KEY_VIEW, isTemplateCode } from './config.js';
 import { saveLocal, updateSaveStatus } from './storage.js';
+
+/* ==========================================================================
+   마지막으로 보던 화면 기억 (새로고침/재접속 시 복원)
+   ========================================================================== */
+export function saveViewState() {
+  try {
+    localStorage.setItem(STORAGE_KEY_VIEW, JSON.stringify({
+      questionId: STATE.currentQuestionId,
+      member: STATE.currentMember,
+      isDiffMode: STATE.isDiffMode
+    }));
+  } catch (err) {}
+}
+
+export function loadViewState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY_VIEW));
+    if (!saved) return null;
+    return {
+      questionId: STATE.questions.some(q => q.id === saved.questionId) ? saved.questionId : 1,
+      member: FIXED_MEMBERS.includes(saved.member) ? saved.member : STATE.currentMember,
+      isDiffMode: saved.isDiffMode === true
+    };
+  } catch (err) {
+    return null;
+  }
+}
 
 /* ==========================================================================
    Question Details & 4-Member Navigation
@@ -33,6 +60,7 @@ export function loadQuestion(id) {
   if (STATE.isDiffMode) {
     renderQuadDiffView();
   }
+  saveViewState();
 }
 
 // 문제에 알맞은 예제 입력 자동 세팅
@@ -98,6 +126,7 @@ export function renderMemberTabs() {
         saveLocal();
       }
       STATE.currentMember = member;
+      saveViewState();
       renderMemberTabs();
       loadCurrentMemberCode();
       renderSidebarQuestions();

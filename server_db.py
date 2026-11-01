@@ -33,6 +33,7 @@ _load_dotenv()
 PORT = int(os.environ.get("PORT", 5173))
 FIREBASE_DB_URL = os.environ.get("FIREBASE_DB_URL", "").strip().rstrip("/")
 FIREBASE_AUTH = os.environ.get("FIREBASE_AUTH", "").strip()
+FIREBASE_SERVICE_ACCOUNT_JSON = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON", "").strip()
 FIREBASE_NODE = "codingmasters_solutions"
 LOCAL_FILE = os.path.join(BASE_DIR, "team_solutions_db.json")
 
@@ -66,9 +67,30 @@ _version_prefix = str(int(time.time()))
 
 
 # ---------------------------------------------------------------- storage
+_credentials = None
+
+
+def _service_account_token():
+    """서비스 계정(FIREBASE_SERVICE_ACCOUNT_JSON)으로 OAuth 액세스 토큰을 받는다 (관리자 권한, 보안 규칙 우회)."""
+    global _credentials
+    import google.auth.transport.requests
+    from google.oauth2 import service_account
+    if _credentials is None:
+        _credentials = service_account.Credentials.from_service_account_info(
+            json.loads(FIREBASE_SERVICE_ACCOUNT_JSON),
+            scopes=["https://www.googleapis.com/auth/firebase.database",
+                    "https://www.googleapis.com/auth/userinfo.email"])
+    if not _credentials.valid:
+        _credentials.refresh(google.auth.transport.requests.Request())
+    return _credentials.token
+
+
 def _firebase_url(path=""):
     url = f"{FIREBASE_DB_URL}/{FIREBASE_NODE}{path}.json"
-    if FIREBASE_AUTH:
+    # 보안 규칙이 클라이언트 접근을 막으므로 서버만 관리자 자격으로 접근한다
+    if FIREBASE_SERVICE_ACCOUNT_JSON:
+        url += "?access_token=" + urllib.parse.quote(_service_account_token())
+    elif FIREBASE_AUTH:  # 구형 데이터베이스 시크릿 (deprecated)
         url += "?auth=" + urllib.parse.quote(FIREBASE_AUTH)
     return url
 

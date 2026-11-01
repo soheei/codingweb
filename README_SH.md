@@ -37,18 +37,19 @@
 ### 1단계. Firebase DB 만들기 (약 5분)
 1. https://console.firebase.google.com 접속 → **프로젝트 추가** (Google Analytics는 꺼도 돼요)
 2. 왼쪽 메뉴 **빌드 → Realtime Database → 데이터베이스 만들기**
-3. 위치 선택 후 **테스트 모드로 시작** (읽기/쓰기 허용)
+3. 위치 선택 후 **잠금 모드로 시작** (모든 클라이언트 접근 차단 — 서버만 관리자 권한으로 접근해요)
 4. 화면 위쪽에 보이는 주소를 복사해요.
    예: `https://내프로젝트-default-rtdb.firebaseio.com`  ← 이게 **FIREBASE_DB_URL**
    (주소 맨 끝에 `/`나 `.json`은 빼요)
 
-> ⚠️ 테스트 모드는 30일 뒤 규칙이 만료돼요. 만료되면 Firebase **규칙** 탭에서 `".read": true, ".write": true`로 다시 바꿔주세요.
+> 🔒 규칙은 `database.rules.json`(전체 차단)을 그대로 쓰세요. `".read": true`/`".write": true`로 열면 누구나 DB를 읽고 지울 수 있어요.
+> 서버용 키: **프로젝트 설정 → 서비스 계정 → 새 비공개 키 생성**으로 받은 JSON 전체를 환경변수 **`FIREBASE_SERVICE_ACCOUNT_JSON`** 에 넣어요. (저장소에 커밋 금지)
 
 ### 2단계. Render에 올리기 (약 5분)
 1. 이 폴더를 GitHub에 push해요 (`server_db.py`, `render.yaml` 포함).
 2. https://render.com 가입 → **New → Blueprint** → 이 GitHub 저장소 선택
-   (또는 **New → Web Service**: Runtime `Python`, Build Command 비움, Start Command `python server_db.py`)
-3. 환경변수 **`FIREBASE_DB_URL`** 에 1단계에서 복사한 주소를 입력해요.
+   (또는 **New → Web Service**: Runtime `Python`, Build Command `pip install -r requirements.txt`, Start Command `python server_db.py`)
+3. 환경변수 **`FIREBASE_DB_URL`** 에 1단계 주소, **`FIREBASE_SERVICE_ACCOUNT_JSON`** 에 서비스 계정 JSON을 입력해요.
 4. Deploy → 완료되면 `https://codingmasters-xxxx.onrender.com` 같은 주소가 생겨요. **이 주소를 팀원에게 공유!**
 
 ### 3단계. 기존 풀이 옮기기 (선택, 한 번만)
