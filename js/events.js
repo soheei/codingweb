@@ -72,6 +72,15 @@ export function setupEventListeners() {
     }
   });
 
+  // 5-1. 입력/실행결과 패널 내리기 · 올리기
+  const editorGrid = document.querySelector(".editor-grid");
+  const setTerminalCollapsed = (collapsed) => {
+    editorGrid.classList.toggle("terminal-collapsed", collapsed);
+    STATE.editor?.refresh();
+  };
+  document.getElementById("btn-terminal-collapse").addEventListener("click", () => setTerminalCollapsed(true));
+  document.getElementById("btn-terminal-expand").addEventListener("click", () => setTerminalCollapsed(false));
+
   // 6. 비교 모드 토글 및 4명 동시 실행
   document.getElementById("btn-toggle-diff-mode").addEventListener("click", toggleDiffMode);
   document.getElementById("btn-run-all-members")?.addEventListener("click", runAllMembersSimultaneously);

@@ -66,16 +66,49 @@
 .editor-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr) auto 280px;
   overflow: hidden;
+}
+.editor-grid.terminal-collapsed {
+  grid-template-rows: minmax(0, 1fr) auto 0;
+}
+.editor-grid.terminal-collapsed .terminal-panel {
+  display: none;
 }
 
 .code-editor-wrapper {
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   position: relative;
   background: #ffffff;
-  border-right: 1px solid var(--border-color);
+}
+
+.terminal-toggle-bar {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  height: 18px;
+  background: #f3f4f6;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+.terminal-toggle-btn {
+  width: 50px;
+  height: 18px;
+  border: none;
+  background: #d1d5db;
+  color: #111827;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 0 0 4px 4px;
+}
+.terminal-toggle-btn:hover { background: #9ca3af; }
+.editor-grid:not(.terminal-collapsed) #btn-terminal-expand,
+.editor-grid.terminal-collapsed #btn-terminal-collapse {
+  opacity: 0.35;
 }
 
 /* Clean Editor CodeMirror (Pure White Background, Crisp Black Text) */

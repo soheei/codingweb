@@ -26,14 +26,14 @@
   <!-- Pyodide: In-Browser Python 3 Engine (WebAssembly) -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
   
-  <link rel="stylesheet" href="css/base.css?v=20261021_04">
-  <link rel="stylesheet" href="css/header.css?v=20261021_04">
-  <link rel="stylesheet" href="css/layout.css?v=20261021_04">
-  <link rel="stylesheet" href="css/workspace.css?v=20261021_04">
-  <link rel="stylesheet" href="css/editor.css?v=20261021_04">
-  <link rel="stylesheet" href="css/terminal.css?v=20261021_04">
-  <link rel="stylesheet" href="css/compare.css?v=20261021_04">
-  <link rel="stylesheet" href="css/responsive.css?v=20261021_04">
+  <link rel="stylesheet" href="css/base.css?v=20261101_01">
+  <link rel="stylesheet" href="css/header.css?v=20261101_01">
+  <link rel="stylesheet" href="css/layout.css?v=20261101_01">
+  <link rel="stylesheet" href="css/workspace.css?v=20261101_01">
+  <link rel="stylesheet" href="css/editor.css?v=20261101_01">
+  <link rel="stylesheet" href="css/terminal.css?v=20261101_01">
+  <link rel="stylesheet" href="css/compare.css?v=20261101_01">
+  <link rel="stylesheet" href="css/responsive.css?v=20261101_01">
 </head>
 <body class="ivory-theme">
   <!-- Top Global Header -->
@@ -178,8 +178,13 @@
             <textarea id="code-editor"></textarea>
           </div>
 
+          <div class="terminal-toggle-bar">
+            <button id="btn-terminal-collapse" class="terminal-toggle-btn" title="입력/실행결과 패널 내리기"><i class="fa-solid fa-caret-down"></i></button>
+            <button id="btn-terminal-expand" class="terminal-toggle-btn" title="입력/실행결과 패널 올리기"><i class="fa-solid fa-caret-up"></i></button>
+          </div>
+
           <div class="terminal-panel">
-            
+
             <!-- SECTION 1: Interactive User Input (sys.stdin / input()) -->
             <div class="input-panel-section">
               <div class="panel-section-header">

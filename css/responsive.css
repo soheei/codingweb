@@ -126,14 +126,16 @@
   .editor-workspace { flex: none; overflow: visible; }
   .editor-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
     overflow: visible;
   }
+  .editor-grid.terminal-collapsed { grid-template-rows: none; }
   .code-editor-wrapper {
     height: 380px;
-    border-right: none;
     border-bottom: 1px solid var(--border-color);
   }
-  .terminal-panel { height: auto; }
+  .terminal-panel { height: auto; grid-template-columns: 1fr; }
+  .input-panel-section { height: 200px; border-right: none; border-bottom: 2px solid #e5e7eb !important; }
   .output-panel-section { min-height: 220px; }
   .diff-workspace { overflow: visible; }
   .diff-header-bar {
