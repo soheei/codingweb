@@ -91,6 +91,7 @@
 }
 
 .col-resizer { display: none; }
+.side-toggle-btn { display: none; }
 
 /* 데스크톱 3단 배치: 왼쪽 문제 설명 | 가운데 에디터(위)+실행 결과(아래) | 오른쪽 문제 목록 */
 @media (min-width: 861px) {
@@ -127,6 +128,35 @@
   .col-resizer.dragging::after { background: #2563eb; }
   .col-resizer-left  { left: calc(var(--left-w, 30%) - 4px); }
   .col-resizer-right { right: calc(var(--right-w, 20vw) - 5px); }
+  /* 좌/우 패널 숨기기 · 열기 버튼 */
+  .side-toggle-btn {
+    display: block;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 56px;
+    z-index: 25;
+    border: none;
+    background: #d1d5db;
+    color: #111827;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  .side-toggle-btn:hover { background: #9ca3af; }
+  .side-toggle-left  { left: var(--left-w, 30%); border-radius: 0 6px 6px 0; }
+  .side-toggle-right { right: var(--right-w, 20vw); border-radius: 6px 0 0 6px; }
+
+  .main-container.left-collapsed  { grid-template-columns: 0 minmax(0, 1fr) var(--right-w, clamp(260px, 20vw, 360px)); }
+  .main-container.right-collapsed { grid-template-columns: var(--left-w, minmax(280px, 30%)) minmax(0, 1fr) 0; }
+  .main-container.left-collapsed.right-collapsed { grid-template-columns: 0 minmax(0, 1fr) 0; }
+  .main-container.left-collapsed .question-card,
+  .main-container.right-collapsed .sidebar-questions,
+  .main-container.left-collapsed .col-resizer-left,
+  .main-container.right-collapsed .col-resizer-right { display: none; }
+  .main-container.left-collapsed .side-toggle-left { left: 0; }
+  .main-container.right-collapsed .side-toggle-right { right: 0; }
+
   body.col-resizing { cursor: col-resize; user-select: none; }
   body.col-resizing * { cursor: col-resize !important; }
   .workspace { display: contents; }

@@ -81,6 +81,26 @@ export function setupEventListeners() {
   document.getElementById("btn-terminal-collapse").addEventListener("click", () => setTerminalCollapsed(true));
   document.getElementById("btn-terminal-expand").addEventListener("click", () => setTerminalCollapsed(false));
 
+  // 5-2. 문제 설명(왼쪽) · 문제 목록(오른쪽) 패널 숨기기 · 열기
+  const mainContainer = document.querySelector(".main-container");
+  const setupSidePanelToggle = (btnId, className, openIcon, closedIcon) => {
+    const btn = document.getElementById(btnId);
+    const storageKey = `codingmasters_${className}`;
+    const render = (collapsed) => {
+      mainContainer.classList.toggle(className, collapsed);
+      btn.querySelector("i").className = `fa-solid ${collapsed ? closedIcon : openIcon}`;
+      STATE.editor?.refresh();
+    };
+    try { render(localStorage.getItem(storageKey) === "1"); } catch (e) { /* 저장소 사용 불가 시 무시 */ }
+    btn.addEventListener("click", () => {
+      const collapsed = !mainContainer.classList.contains(className);
+      render(collapsed);
+      try { localStorage.setItem(storageKey, collapsed ? "1" : "0"); } catch (e) { /* 무시 */ }
+    });
+  };
+  setupSidePanelToggle("btn-toggle-left", "left-collapsed", "fa-caret-left", "fa-caret-right");
+  setupSidePanelToggle("btn-toggle-right", "right-collapsed", "fa-caret-right", "fa-caret-left");
+
   // 6. 비교 모드 토글 및 4명 동시 실행
   document.getElementById("btn-toggle-diff-mode").addEventListener("click", toggleDiffMode);
   document.getElementById("btn-run-all-members")?.addEventListener("click", runAllMembersSimultaneously);

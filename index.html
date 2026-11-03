@@ -26,14 +26,14 @@
   <!-- Pyodide: In-Browser Python 3 Engine (WebAssembly) -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
   
-  <link rel="stylesheet" href="css/base.css?v=20261101_02">
-  <link rel="stylesheet" href="css/header.css?v=20261101_02">
-  <link rel="stylesheet" href="css/layout.css?v=20261101_02">
-  <link rel="stylesheet" href="css/workspace.css?v=20261101_02">
-  <link rel="stylesheet" href="css/editor.css?v=20261101_02">
-  <link rel="stylesheet" href="css/terminal.css?v=20261101_02">
-  <link rel="stylesheet" href="css/compare.css?v=20261101_02">
-  <link rel="stylesheet" href="css/responsive.css?v=20261101_02">
+  <link rel="stylesheet" href="css/base.css?v=20261103_01">
+  <link rel="stylesheet" href="css/header.css?v=20261103_01">
+  <link rel="stylesheet" href="css/layout.css?v=20261103_01">
+  <link rel="stylesheet" href="css/workspace.css?v=20261103_01">
+  <link rel="stylesheet" href="css/editor.css?v=20261103_01">
+  <link rel="stylesheet" href="css/terminal.css?v=20261103_01">
+  <link rel="stylesheet" href="css/compare.css?v=20261103_01">
+  <link rel="stylesheet" href="css/responsive.css?v=20261103_01">
 </head>
 <body class="ivory-theme">
   <!-- Top Global Header -->
@@ -256,6 +256,10 @@
     <!-- 열 폭 조절 핸들 (드래그: 폭 조절 / 더블클릭: 기본 폭) -->
     <div class="col-resizer col-resizer-left" id="resizer-left" title="드래그해서 문제 설명 폭 조절 (더블클릭: 초기화)"></div>
     <div class="col-resizer col-resizer-right" id="resizer-right" title="드래그해서 문제 목록 폭 조절 (더블클릭: 초기화)"></div>
+
+    <!-- 문제 설명 / 문제 목록 숨기기 · 열기 -->
+    <button id="btn-toggle-left" class="side-toggle-btn side-toggle-left" title="문제 설명 숨기기/열기"><i class="fa-solid fa-caret-left"></i></button>
+    <button id="btn-toggle-right" class="side-toggle-btn side-toggle-right" title="문제 목록 숨기기/열기"><i class="fa-solid fa-caret-right"></i></button>
   </div>
 
   <!-- Toast Notification Modal -->
