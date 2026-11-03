@@ -91,6 +91,7 @@
 }
 
 .col-resizer { display: none; }
+.row-resizer { display: none; }
 .side-toggle-btn { display: none; }
 
 /* 데스크톱 3단 배치: 왼쪽 문제 설명 | 가운데 에디터(위)+실행 결과(아래) | 오른쪽 문제 목록 */
@@ -233,18 +234,93 @@
     padding: 8px 12px;
   }
   .header-actions { justify-content: center; }
+
+  /* 헤더 압축: 로고 한 줄 + 버튼은 아이콘만 (글자는 툴팁으로 확인) */
+  .app-header {
+    position: static;
+    min-height: 0;
+    gap: 4px 12px;
+    padding: 4px 10px;
+  }
+  .brand-icon { transform: scale(0.75); margin: -4px; }
+  .brand-text h1 { font-size: 1rem; gap: 6px; }
+  .badge-team, .subtitle { display: none; }
+  .header-actions { gap: 4px 6px; }
+  .header-actions .btn {
+    font-size: 0;
+    gap: 0;
+    padding: 6px 10px;
+  }
+  .header-actions .btn i { font-size: 0.9rem; }
+  .sync-status, .pyodide-status { padding: 4px 8px; gap: 4px; }
+  .sync-status .sync-text,
+  .pyodide-status .status-text { display: none; }
   .main-container {
     flex-direction: column;
     overflow: visible;
   }
   .sidebar-questions {
     width: 100%;
-    max-height: 320px;
+    height: var(--list-h, auto);
+    max-height: var(--list-h, 320px);
     border-right: none;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: none;
   }
+  .sidebar-questions .question-list { min-height: 0; overflow-y: auto; padding: 4px; }
+
+  /* 문제 목록 상단(검색·필터·진행률) 압축: 검색+필터 한 줄, 진행률 얇게 */
+  .sidebar-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+    padding: 4px 8px;
+  }
+  .search-box { flex: 1 1 160px; padding: 2px 8px; gap: 6px; }
+  .search-box i { font-size: 0.72rem; }
+  .search-box input { font-size: 0.72rem; }
+  .filter-row { flex: 1 1 200px; gap: 4px; }
+  .dropdown { padding: 2px 4px; font-size: 0.7rem; }
+  .progress-bar-container { flex: 1 1 100%; margin: 0; }
+  .progress-labels { font-size: 0.64rem; margin-bottom: 1px; }
+  .progress-track { height: 3px; }
   .workspace { overflow: visible; }
   .question-card { padding: 12px 14px; }
+  .question-desc {
+    height: var(--desc-h, auto);
+    max-height: var(--desc-h, 80px);
+  }
+
+  /* 세로 크기 조절 핸들 (문제 목록 / 문제 설명 / 코드 입력창) */
+  .row-resizer {
+    display: block;
+    position: relative;
+    flex-shrink: 0;
+    height: 14px;
+    background: #e5e7eb;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    cursor: row-resize;
+    touch-action: none;
+    user-select: none;
+    z-index: 5;
+  }
+  .row-resizer::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 4px;
+    margin: -2px 0 0 -22px;
+    border-radius: 2px;
+    background: #9ca3af;
+    transition: background 0.15s;
+  }
+  .row-resizer:hover::after,
+  .row-resizer.dragging::after { background: #2563eb; }
+  .question-card > .row-resizer { margin: 10px -14px -12px; }
+  body.row-resizing, body.row-resizing * { cursor: row-resize !important; user-select: none; }
   .editor-workspace { flex: none; overflow: visible; }
   .editor-grid {
     grid-template-columns: 1fr;
@@ -253,7 +329,7 @@
   }
   .editor-grid.terminal-collapsed { grid-template-rows: none; }
   .code-editor-wrapper {
-    height: 380px;
+    height: var(--editor-h, 380px);
     border-bottom: 1px solid var(--border-color);
   }
   .terminal-panel { height: auto; grid-template-columns: 1fr; }

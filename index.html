@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="css/editor.css?v=20261103_01">
   <link rel="stylesheet" href="css/terminal.css?v=20261103_01">
   <link rel="stylesheet" href="css/compare.css?v=20261103_01">
-  <link rel="stylesheet" href="css/responsive.css?v=20261103_01">
+  <link rel="stylesheet" href="css/responsive.css?v=20261103_03">
 </head>
 <body class="ivory-theme">
   <!-- Top Global Header -->
@@ -129,6 +129,7 @@
         <!-- Rendered dynamically via JS -->
       </div>
     </aside>
+    <div class="row-resizer" data-target="list" title="드래그해서 문제 목록 높이 조절 (더블클릭: 초기화)"></div>
 
     <!-- CENTER & RIGHT: Workspace -->
     <main class="workspace">
@@ -151,6 +152,7 @@
         <div class="question-desc" id="current-q-desc">
           <!-- Problem Description -->
         </div>
+        <div class="row-resizer" data-target="desc" title="드래그해서 문제 설명 높이 조절 (더블클릭: 초기화)"></div>
       </section>
 
       <!-- VIEW 1: Standard Single-Tab Editor & Interactive Input/Output Panel -->
@@ -177,6 +179,7 @@
           <div class="code-editor-wrapper">
             <textarea id="code-editor"></textarea>
           </div>
+          <div class="row-resizer" data-target="editor" title="드래그해서 코드 입력창 높이 조절 (더블클릭: 초기화)"></div>
 
           <div class="terminal-toggle-bar">
             <button id="btn-terminal-collapse" class="terminal-toggle-btn" title="입력/실행결과 패널 내리기"><i class="fa-solid fa-caret-down"></i></button>

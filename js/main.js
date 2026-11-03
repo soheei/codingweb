@@ -6,7 +6,7 @@ import { setupEventListeners } from './events.js';
 import { setupFirebaseModal } from './firebase.js';
 import { loadQuestion, loadViewState, renderCategoryFilter, renderSidebarQuestions, updateProgress } from './navigation.js';
 import { setupNotebookExport } from './notebook.js';
-import { setupColumnResizers } from './resizer.js';
+import { setupColumnResizers, setupRowResizers } from './resizer.js';
 import { initPyodide } from './runner.js';
 import { loadInitialSolutions } from './storage.js';
 import { setupServerPolling } from './sync.js';
@@ -47,6 +47,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupFirebaseModal();
   setupNotebookExport();
   setupColumnResizers();
+  setupRowResizers();
 
   // 6. 배포 서버(server_db.py) 변경 감지 폴링: 팀원이 저장하면 새로고침 없이 반영
   setupServerPolling();

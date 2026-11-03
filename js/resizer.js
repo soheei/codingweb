@@ -8,6 +8,78 @@ const MIN_LEFT = 240;
 const MIN_RIGHT = 220;
 const MIN_CENTER = 360;
 
+/* ==========================================================================
+   Row Resizer (좁은 화면): 문제 목록 / 문제 설명 / 코드 입력창 높이를 위아래로 드래그해 조절
+   ========================================================================== */
+const STORAGE_KEY_ROWS = "codingmasters_rows_v1";
+const ROW_TARGETS = {
+  list:   { cssVar: "--list-h",   selector: ".sidebar-questions", min: 120 },
+  desc:   { cssVar: "--desc-h",   selector: ".question-desc",     min: 40 },
+  editor: { cssVar: "--editor-h", selector: ".code-editor-wrapper", min: 120 }
+};
+
+export function setupRowResizers() {
+  const root = document.documentElement;
+  const handles = document.querySelectorAll(".row-resizer");
+  if (!handles.length) return;
+
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY_ROWS)) || {}; } catch (e) { /* 무시 */ }
+  const persist = () => {
+    try { localStorage.setItem(STORAGE_KEY_ROWS, JSON.stringify(saved)); } catch (e) { /* 무시 */ }
+  };
+  Object.entries(ROW_TARGETS).forEach(([key, t]) => {
+    if (saved[key]) root.style.setProperty(t.cssVar, `${saved[key]}px`);
+  });
+
+  handles.forEach((handle) => {
+    const key = handle.dataset.target;
+    const t = ROW_TARGETS[key];
+    if (!t) return;
+
+    handle.addEventListener("pointerdown", (down) => {
+      const target = document.querySelector(t.selector);
+      if (!target) return;
+      down.preventDefault();
+      handle.setPointerCapture(down.pointerId);
+      handle.classList.add("dragging");
+      document.body.classList.add("row-resizing");
+
+      const startY = down.clientY;
+      const startH = target.getBoundingClientRect().height;
+      let frame = 0;
+
+      const onMove = (e) => {
+        const h = Math.max(t.min, Math.round(startH + e.clientY - startY));
+        root.style.setProperty(t.cssVar, `${h}px`);
+        saved[key] = h;
+        if (!frame) frame = requestAnimationFrame(() => { frame = 0; STATE.editor?.refresh(); });
+      };
+      const onUp = () => {
+        handle.releasePointerCapture(down.pointerId);
+        handle.classList.remove("dragging");
+        document.body.classList.remove("row-resizing");
+        handle.removeEventListener("pointermove", onMove);
+        handle.removeEventListener("pointerup", onUp);
+        handle.removeEventListener("pointercancel", onUp);
+        persist();
+        STATE.editor?.refresh();
+      };
+      handle.addEventListener("pointermove", onMove);
+      handle.addEventListener("pointerup", onUp);
+      handle.addEventListener("pointercancel", onUp);
+    });
+
+    // 더블클릭하면 기본 높이로 복원
+    handle.addEventListener("dblclick", () => {
+      root.style.removeProperty(t.cssVar);
+      delete saved[key];
+      persist();
+      STATE.editor?.refresh();
+    });
+  });
+}
+
 export function setupColumnResizers() {
   const container = document.querySelector(".main-container");
   const leftHandle = document.getElementById("resizer-left");
