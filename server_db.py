@@ -932,6 +932,23 @@ def startup_check():
         print(f"[점검][실패] Firebase DB 읽기 실패: {e}")
 
 
+def migrate_legacy_passed():
+    """채점 기능이 생기기 전에 '저장만으로 완료'였던 풀이(기본 템플릿이 아닌 코드)를 통과로 한 번만 옮겨 준다.
+    DB 의 meta/passedMigrated 표시가 있으면 다시 하지 않는다 (이후 코드를 고쳐서 풀린 완료가 되살아나지 않도록)."""
+    if db_get("meta/passedMigrated"):
+        return 0
+    with _lock:
+        with _cache_lock:
+            todo = [(qid, uid, code) for qid, cells in _cache["solutions"].items() for uid, code in cells.items()
+                    if not _is_template(code) and uid not in _cache["passed"].get(qid, {})]
+        updates = {f"passed/{qid}/{uid}": True for qid, uid, _ in todo}
+        updates["meta/passedMigrated"] = True
+        db_update(updates)
+        for qid, uid, code in todo:
+            _cache_set_cell(qid, uid, code, True)
+    return len(todo)
+
+
 if __name__ == "__main__":
     mode = "Firebase" if FIREBASE_DB_URL else "로컬 JSON 파일(테스트용: local_db.json)"
     print(f"[CODING MASTERS] port={PORT} storage={mode} auth_project={FIREBASE_PROJECT_ID or '(미설정)'}"
@@ -942,6 +959,9 @@ if __name__ == "__main__":
         _cache_ensure()
         print(f"[캐시] 사용자 {len(_cache['users'])}명, 풀이 {sum(len(c) for c in _cache['solutions'].values())}칸을 메모리에 불러왔습니다 "
               f"(Firebase 와 {int(CACHE_REFRESH_SECS)}초마다 대조)")
+        moved = migrate_legacy_passed()
+        if moved:
+            print(f"[이전] 기존 완료 풀이 {moved}칸을 통과 상태로 옮겼습니다 (한 번만 실행됩니다)")
     except Exception as e:
         print(f"[캐시][실패] 첫 로드 실패(요청이 올 때 다시 시도합니다): {e}")
     sys.stdout.flush()

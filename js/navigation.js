@@ -206,7 +206,7 @@ export function renderMemberTabs() {
   const viewingOther = isViewingOther();
 
   const myTab = document.createElement("div");
-  myTab.className = `member-tab ${!viewingOther ? "active" : ""}`;
+  myTab.className = `member-tab my-tab ${!viewingOther ? "active" : ""}`;
   myTab.innerHTML = `내 코드`;
   myTab.addEventListener("click", () => { if (viewingOther) switchOwner(STATE.me.uid); });
   container.appendChild(myTab);

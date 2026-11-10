@@ -115,6 +115,7 @@ button, select, input, textarea { font-family: inherit; }
 }
 .editor-header .member-tab:hover { color: var(--text-main); background: var(--bg-primary); }
 .editor-header .member-tab.active { color: var(--accent-color); font-weight: 600; background: transparent; border-bottom-color: var(--accent-color); }
+.editor-header .member-tab.my-tab { padding: 0 20px; } /* "내 코드" 탭만 좌우 여백을 넓힘 (파란 밑줄도 같이 길어짐) */
 .autosave-tag { font-size: 0.75rem; color: var(--text-muted); }
 .terminal-toggle-bar { background: var(--bg-secondary); }
 .terminal-toggle-btn { background: var(--bg-tertiary); color: var(--text-muted); }
