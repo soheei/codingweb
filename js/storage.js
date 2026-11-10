@@ -1,102 +1,114 @@
-import { DEFAULT_CODE, FIXED_MEMBERS, LOCAL_SERVER_API, STATE, STORAGE_KEY_SOLUTIONS } from './config.js';
-import { getFirebaseEndpoint, updateFirebaseButtonState } from './firebase.js';
+import { DEFAULT_CODE, STATE, STORAGE_KEY_SOLUTIONS, isMe } from './config.js';
+import { apiFetch } from './auth.js';
 import { renderSidebarQuestions, updateProgress } from './navigation.js';
 import { setSyncStatus, showToast } from './ui.js';
 
 /* ==========================================================================
-   Data Loading & Multi-Tier Storage Engine
+   Data Loading & Saving
+   - 저장은 항상 "내 칸"에만 한다 (서버도 로그인 토큰의 uid 칸에만 쓴다).
+   - 다른 사람의 풀이는 읽기 전용으로 내려받는다.
    ========================================================================== */
+const cacheKey = () => `${STORAGE_KEY_SOLUTIONS}_${STATE.me.uid}`;
+
+// 지금 화면에 필요한 사용자들(나 + 보고 있는 사람 + 비교 대상)
+export function neededUids(extra = []) {
+  const set = new Set([STATE.me.uid, STATE.currentMember, ...STATE.compareUids, ...extra]);
+  set.delete(null);
+  set.delete(undefined);
+  return [...set];
+}
+
+// 서버에서 풀이를 받아 STATE.solutions 에 합친다.
+// 내가 지금 편집 중인 칸(저장 전 변경)은 덮어쓰지 않는다. 반환값: 바뀐 칸이 있는지.
+export async function fetchSolutions(uids = neededUids()) {
+  const res = await apiFetch(`/api/sync?users=${encodeURIComponent(uids.join(","))}`);
+  if (!res.ok) throw new Error(`sync failed: ${res.status}`);
+  const serverData = await res.json();
+  let changed = false;
+  Object.keys(serverData).forEach(qId => {
+    if (!STATE.solutions[qId]) STATE.solutions[qId] = {};
+    Object.entries(serverData[qId]).forEach(([uid, code]) => {
+      const isEditingNow = (Number(qId) === STATE.currentQuestionId && isMe(uid) && STATE.hasUnsavedChanges);
+      if (!isEditingNow && typeof code === "string" && STATE.solutions[qId][uid] !== code) {
+        STATE.solutions[qId][uid] = code;
+        changed = true;
+      }
+    });
+  });
+  return changed;
+}
+
+export async function loadUsers() {
+  const res = await apiFetch("/api/users");
+  if (!res.ok) throw new Error(`users failed: ${res.status}`);
+  STATE.users = (await res.json()).users;
+  const mine = STATE.users.find(u => u.uid === STATE.me.uid);
+  if (mine) STATE.me.displayName = mine.displayName;
+}
+
 export async function loadInitialSolutions() {
   let loaded = false;
 
-  // 1순위: Firebase 클라우드가 설정되어 있다면 Firebase에서 최우선 로드 (GitHub Pages 완전 지원)
-  const fbEndpoint = getFirebaseEndpoint();
-  if (fbEndpoint) {
-    try {
-      const fbRes = await fetch(fbEndpoint, { cache: "no-store" });
-      if (fbRes.ok) {
-        const fbData = await fbRes.json();
-        if (fbData && Object.keys(fbData).length > 0) {
-          STATE.solutions = fbData;
-          localStorage.setItem(STORAGE_KEY_SOLUTIONS, JSON.stringify(fbData));
-          loaded = true;
-          setSyncStatus("connected", "🔥 Firebase 실시간 클라우드 DB 연결됨 (GitHub Pages 지원)");
-          updateFirebaseButtonState(true);
-        }
-      }
-    } catch (err) {
-      console.warn("Firebase 로드 실패:", err);
-    }
+  try {
+    await loadUsers();
+    await fetchSolutions();
+    loaded = true;
+    setSyncStatus("connected", "서버 연결됨 (실시간 동기화)");
+  } catch (err) {
+    console.warn("서버 로드 실패:", err);
   }
 
-  // 2순위: 로컬 파이썬 서버(team_solutions_db.json)에서 로드 시도
+  // 서버에 닿지 않을 때만 브라우저에 남겨둔 내 풀이로 복원
   if (!loaded) {
     try {
-      const res = await fetch(LOCAL_SERVER_API, { cache: "no-store" });
-      if (res.ok) {
-        const serverData = await res.json();
-        if (serverData && Object.keys(serverData).length > 0) {
-          STATE.solutions = serverData;
-          localStorage.setItem(STORAGE_KEY_SOLUTIONS, JSON.stringify(serverData));
-          loaded = true;
-          setSyncStatus("connected", "로컬 서버 파일(team_solutions_db.json) 연결됨");
-        }
+      const cached = JSON.parse(localStorage.getItem(cacheKey()) || "null");
+      if (cached && typeof cached === "object") {
+        STATE.solutions = cached;
+        setSyncStatus("connected", "오프라인: 브라우저 저장소에서 불러옴");
       }
-    } catch (err) {
-      // 로컬 서버가 아직 안 켜져 있거나 오프라인일 때
-    }
+    } catch (e) { /* 무시 */ }
   }
 
-  // 3순위: 브라우저 localStorage에서 복원
-  if (!loaded) {
-    const localData = localStorage.getItem(STORAGE_KEY_SOLUTIONS);
-    if (localData) {
-      try {
-        STATE.solutions = JSON.parse(localData);
-        loaded = true;
-        setSyncStatus("connected", "로컬 브라우저 저장소 로드됨");
-      } catch (e) {}
-    }
-  }
-
-  // 4순위: 기본 템플릿 코드 채우기
+  // 빈 칸은 화면에서만 기본 템플릿으로 대체 (내 칸만 채운다)
   STATE.questions.forEach(q => {
     if (!STATE.solutions[q.id]) STATE.solutions[q.id] = {};
-    FIXED_MEMBERS.forEach(m => {
-      if (!STATE.solutions[q.id][m]) {
-        STATE.solutions[q.id][m] = DEFAULT_CODE;
-      }
-    });
+    if (!STATE.solutions[q.id][STATE.me.uid]) STATE.solutions[q.id][STATE.me.uid] = DEFAULT_CODE;
   });
 
   updateProgress();
   updateSaveStatus("saved");
 }
 
-// 로컬 저장 (localStorage)
+// 로컬 저장 (내 풀이만 브라우저에 백업)
 export function saveLocal() {
-  localStorage.setItem(STORAGE_KEY_SOLUTIONS, JSON.stringify(STATE.solutions));
+  try {
+    const mine = {};
+    Object.keys(STATE.solutions).forEach(qId => {
+      const code = STATE.solutions[qId] && STATE.solutions[qId][STATE.me.uid];
+      if (typeof code === "string") mine[qId] = { [STATE.me.uid]: code };
+    });
+    localStorage.setItem(cacheKey(), JSON.stringify(mine));
+  } catch (e) { /* 저장소 사용 불가 시 무시 */ }
   updateProgress();
 }
 
 /* ==========================================================================
-   Unified Save Engine (자동 저장 및 수동 저장 둘 다 완벽 지원)
+   Unified Save Engine
    ========================================================================== */
-// 사용자가 에디터에 타이핑할 때 호출
+// 사용자가 에디터에 타이핑할 때 호출 (내 코드를 보고 있을 때만 의미가 있다)
 export function handleEditorChange() {
   if (STATE.isDiffMode) return;
-  
+  if (!isMe(STATE.currentMember)) return; // 남의 코드는 수정/저장 대상이 아니다
+
   const currentCode = STATE.editor.getValue();
   if (!STATE.solutions[STATE.currentQuestionId]) {
     STATE.solutions[STATE.currentQuestionId] = {};
   }
-  
-  // 변경사항 반영
-  STATE.solutions[STATE.currentQuestionId][STATE.currentMember] = currentCode;
+
+  STATE.solutions[STATE.currentQuestionId][STATE.me.uid] = currentCode;
   STATE.hasUnsavedChanges = true;
   updateSaveStatus("dirty");
 
-  // 자동 저장이 켜져 있으면 디바운스 실행 (800ms)
   if (STATE.isAutoSaveEnabled) {
     if (STATE.saveTimer) clearTimeout(STATE.saveTimer);
     STATE.saveTimer = setTimeout(() => {
@@ -105,86 +117,60 @@ export function handleEditorChange() {
   }
 }
 
-// 실제 저장 실행 (isManual: 수동 저장 버튼 클릭 여부)
-// saveAll=false(기본): 현재 선택된 사람(탭)의 풀이만 서버에 보낸다. (다른 사람 칸을 덮어쓰지 않기 위함)
-// resetCurrent=true: 현재 문제/사람의 풀이만 기본 코드로 되돌려 서버에 반영 (서버의 템플릿 덮어쓰기 방지 규칙 우회)
+async function saveCell(qId, code, reset = false) {
+  const res = await apiFetch("/api/solution", {
+    method: "PATCH",
+    body: { questionId: Number(qId), code, reset }
+  });
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try { msg = (await res.json()).message || msg; } catch (e) { /* 무시 */ }
+    throw new Error(msg);
+  }
+}
+
+// isManual: 수동 저장 여부
+// saveAll=true: 내 모든 풀이를 서버에 보냄 (백업 불러오기 직후)
+// resetCurrent=true: 현재 문제의 내 풀이를 기본 코드로 되돌려 서버에 반영
 export async function executeSave(isManual = false, saveAll = false, resetCurrent = false) {
   if (STATE.saveTimer) clearTimeout(STATE.saveTimer);
   updateSaveStatus("saving");
-
-  // 1. 브라우저 localStorage 즉시 저장
   saveLocal();
 
-  let firebaseSaved = false;
-  let serverSaved = false;
-
-  // 2. Firebase 실시간 클라우드 DB에 영구 저장 (GitHub Pages에서 핵심 동작)
-  const fbEndpoint = getFirebaseEndpoint();
-  if (fbEndpoint) {
-    try {
-      const fbRes = await fetch(fbEndpoint, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(STATE.solutions)
-      });
-      if (fbRes.ok) {
-        firebaseSaved = true;
-      }
-    } catch (err) {
-      console.warn("Firebase 저장 에러:", err);
-    }
-  }
-
-  // 3. 로컬 파이썬 서버에 영구 파일 저장 시도 (team_solutions_db.json)
+  let ok = false;
+  let errorText = "";
   try {
-    let serverPayload = STATE.solutions;
+    const mine = (qId) => STATE.solutions[qId] && STATE.solutions[qId][STATE.me.uid];
     if (resetCurrent) {
-      serverPayload = { [STATE.currentQuestionId]: { [STATE.currentMember]: DEFAULT_CODE } };
-    } else if (!saveAll) {
-      serverPayload = {};
-      Object.keys(STATE.solutions).forEach(qId => {
-        const code = STATE.solutions[qId] && STATE.solutions[qId][STATE.currentMember];
-        if (typeof code === "string") serverPayload[qId] = { [STATE.currentMember]: code };
-      });
+      await saveCell(STATE.currentQuestionId, DEFAULT_CODE, true);
+    } else if (saveAll) {
+      for (const q of STATE.questions) {
+        const code = mine(q.id);
+        if (typeof code === "string" && code !== DEFAULT_CODE) await saveCell(q.id, code);
+      }
+    } else {
+      // 지금 보고 있는 문제의 내 풀이만 저장 (한 칸 단위 → 다른 사람 칸을 덮어쓸 일이 없다)
+      const code = mine(STATE.currentQuestionId);
+      if (typeof code === "string") await saveCell(STATE.currentQuestionId, code);
     }
-    // 4인 비교 모드에서는 현재 문제의 모든 사람 칸이 편집될 수 있으므로 함께 보낸다
-    if (STATE.isDiffMode && !resetCurrent && !saveAll) {
-      serverPayload[STATE.currentQuestionId] = { ...STATE.solutions[STATE.currentQuestionId] };
-    }
-    const serverRes = await fetch(resetCurrent ? `${LOCAL_SERVER_API}?reset=1` : LOCAL_SERVER_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(serverPayload)
-    });
-    if (serverRes.ok) {
-      serverSaved = true;
-    }
+    ok = true;
   } catch (err) {
-    // 로컬 서버 오프라인인 경우
+    errorText = err.message || String(err);
+    console.warn("서버 저장 실패:", err);
   }
 
-  STATE.hasUnsavedChanges = false;
   STATE.lastSavedAt = new Date();
-  updateSaveStatus("saved");
   renderSidebarQuestions();
 
-  // 상태 메시지 갱신
-  let statusMsg = "저장 완료";
-  if (firebaseSaved) {
-    statusMsg = "🔥 Firebase 클라우드에 영구 저장 완료 (GitHub Pages 동기화)";
-  } else if (serverSaved) {
-    const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-    statusMsg = isLocalHost
-      ? "내 컴퓨터 서버(localhost)에 저장 완료 (배포 서버 아님)"
-      : "배포 서버(Firebase)에 저장 완료";
+  if (ok) {
+    STATE.hasUnsavedChanges = false;
+    updateSaveStatus("saved");
+    setSyncStatus("connected", `서버에 저장 완료 (${STATE.lastSavedAt.toLocaleTimeString()})`);
+    if (isManual) showToast("서버에 저장되었습니다.");
   } else {
-    statusMsg = "브라우저 로컬 저장소에 안전하게 저장 완료";
-  }
-
-  setSyncStatus("connected", `${statusMsg} (${STATE.lastSavedAt.toLocaleTimeString()})`);
-
-  if (isManual) {
-    showToast(`✓ [수동 저장 완료] ${statusMsg}!`);
+    updateSaveStatus("dirty");
+    setSyncStatus("loading", `서버 저장 실패: ${errorText} (브라우저에는 임시 저장됨)`);
+    showToast(`서버 저장에 실패했습니다: ${errorText}`);
   }
 }
 

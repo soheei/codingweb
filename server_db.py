@@ -1,7 +1,7 @@
-
 import http.server
 import json
 import os
+import re
 import socketserver
 import sys
 import threading
@@ -34,13 +34,26 @@ PORT = int(os.environ.get("PORT", 5173))
 FIREBASE_DB_URL = os.environ.get("FIREBASE_DB_URL", "").strip().rstrip("/")
 FIREBASE_AUTH = os.environ.get("FIREBASE_AUTH", "").strip()
 FIREBASE_SERVICE_ACCOUNT_JSON = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON", "").strip()
-FIREBASE_NODE = "codingmasters_solutions"
-LOCAL_FILE = os.path.join(BASE_DIR, "team_solutions_db.json")
+# 로컬 개발용: JSON 내용을 환경변수에 넣는 대신 키 파일 경로를 줄 수도 있다 (프로젝트 폴더 밖에 두고 쓰는 것을 권장)
+_SA_FILE = os.environ.get("FIREBASE_SERVICE_ACCOUNT_FILE", "").strip().strip('"')
+if _SA_FILE and not FIREBASE_SERVICE_ACCOUNT_JSON:
+    try:
+        with open(_SA_FILE, "r", encoding="utf-8-sig") as _f:
+            FIREBASE_SERVICE_ACCOUNT_JSON = json.dumps(json.load(_f))
+    except (OSError, ValueError) as _e:
+        print(f"[설정 오류] FIREBASE_SERVICE_ACCOUNT_FILE 을 읽지 못했습니다: {_e}")
+# Firebase Authentication ID 토큰 검증용 (콘솔 > 프로젝트 설정 > 프로젝트 ID)
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "codingmastars").strip()
+# 로컬 개발 전용: 1 이면 "dev:<uid>" 형태의 가짜 토큰을 허용한다. 배포 환경에서는 절대 켜지 말 것.
+DEV_AUTH_BYPASS = os.environ.get("DEV_AUTH_BYPASS", "") == "1"
+LOCAL_DB_FILE = os.path.join(BASE_DIR, "local_db.json")  # Firebase 미설정 시 테스트용 저장소
 
-FIXED_MEMBERS = ["김민희", "양소희", "정호준", "차승우"]
 QUESTION_RANGE = range(1, 101)
 MAX_CODE_LEN = 50_000
-# app.js 의 DEFAULT_CODE 와 동일해야 함
+FAKE_EMAIL_DOMAIN = "codingmasters.local"
+LOGIN_ID_RE = re.compile(r"^[a-z0-9_]{4,20}$")
+# Firebase 경로 키에 쓸 수 없는 문자(. $ # [ ] /)를 배제한 표시 이름 규칙
+DISPLAY_NAME_RE = re.compile(r"^[0-9A-Za-z가-힣_\- ]{2,12}$")
 DEFAULT_CODE = """import sys
 
 a = int(sys.stdin.readline())
@@ -67,6 +80,7 @@ _version_prefix = str(int(time.time()))
 
 
 # ---------------------------------------------------------------- storage
+# DB 루트 기준 경로로 읽고 쓴다: users/{uid}, loginIndex/{id}, nameIndex/{name}, solutions/{문제}/{uid}
 _credentials = None
 
 
@@ -76,8 +90,13 @@ def _service_account_token():
     import google.auth.transport.requests
     from google.oauth2 import service_account
     if _credentials is None:
+        try:
+            key_info = json.loads(FIREBASE_SERVICE_ACCOUNT_JSON)
+        except ValueError:
+            raise RuntimeError("FIREBASE_SERVICE_ACCOUNT_JSON 값이 올바른 JSON이 아닙니다 "
+                               "(.env 에 서비스 계정 JSON 내용을 줄바꿈 없이 한 줄로 넣었는지 확인하세요)")
         _credentials = service_account.Credentials.from_service_account_info(
-            json.loads(FIREBASE_SERVICE_ACCOUNT_JSON),
+            key_info,
             scopes=["https://www.googleapis.com/auth/firebase.database",
                     "https://www.googleapis.com/auth/userinfo.email"])
     if not _credentials.valid:
@@ -86,7 +105,9 @@ def _service_account_token():
 
 
 def _firebase_url(path=""):
-    url = f"{FIREBASE_DB_URL}/{FIREBASE_NODE}{path}.json"
+    # 한글 이름 등이 경로에 들어갈 수 있으므로 URL 인코딩한다 (슬래시는 경로 구분자로 유지)
+    path = urllib.parse.quote(path, safe="/")
+    url = f"{FIREBASE_DB_URL}/{path}.json" if path else f"{FIREBASE_DB_URL}/.json"
     # 보안 규칙이 클라이언트 접근을 막으므로 서버만 관리자 자격으로 접근한다
     if FIREBASE_SERVICE_ACCOUNT_JSON:
         url += "?access_token=" + urllib.parse.quote(_service_account_token())
@@ -99,48 +120,69 @@ def _firebase_request(method, url, body=None):
     data = json.dumps(body, ensure_ascii=False).encode("utf-8") if body is not None else None
     req = urllib.request.Request(url, data=data, method=method,
                                  headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=15) as res:
-        return json.loads(res.read().decode("utf-8") or "null")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as res:
+            text = res.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")[:200]
+        raise RuntimeError(f"Firebase DB 요청 실패 (HTTP {e.code}): {detail}")
+    try:
+        return json.loads(text or "null")
+    except ValueError:
+        raise RuntimeError(f"Firebase DB 응답이 JSON이 아닙니다: {text[:100]!r} (FIREBASE_DB_URL 주소를 확인하세요)")
 
 
-def _normalize(raw):
-    """Firebase는 키가 1,2,3... 이면 배열로 돌려줄 수 있어 dict로 통일한다."""
-    if raw is None:
-        return {}
-    if isinstance(raw, list):
-        raw = {str(i): v for i, v in enumerate(raw) if v is not None}
-    out = {}
-    for qid, members in raw.items():
-        if isinstance(members, list):
-            members = {str(i): v for i, v in enumerate(members) if v is not None}
-        if isinstance(members, dict):
-            out[str(qid)] = members
-    return out
-
-
-def load_all():
-    if FIREBASE_DB_URL:
-        return _normalize(_firebase_request("GET", _firebase_url()))
-    if os.path.exists(LOCAL_FILE):
-        with open(LOCAL_FILE, "r", encoding="utf-8") as f:
+def _local_load():
+    if os.path.exists(LOCAL_DB_FILE):
+        with open(LOCAL_DB_FILE, "r", encoding="utf-8") as f:
             content = f.read().strip()
-            return _normalize(json.loads(content)) if content else {}
+            return json.loads(content) if content else {}
     return {}
 
 
-def save_changes(changes):
-    """changes: {"문제/이름": 코드}. 바뀐 칸만 저장."""
-    if not changes:
+def _local_save(data):
+    with open(LOCAL_DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _as_dict(raw):
+    """Firebase 는 키가 0,1,2... 처럼 보이면 배열로 돌려줄 수 있어 dict 로 통일한다."""
+    if isinstance(raw, list):
+        return {str(i): v for i, v in enumerate(raw) if v is not None}
+    return raw if isinstance(raw, dict) else {}
+
+
+def db_get(path):
+    if FIREBASE_DB_URL:
+        return _firebase_request("GET", _firebase_url(path))
+    node = _local_load()
+    for part in [p for p in path.split("/") if p]:
+        if not isinstance(node, dict) or part not in node:
+            return None
+        node = node[part]
+    return node
+
+
+def db_update(updates):
+    """멀티패스 업데이트: {"users/uid/displayName": "이름", "nameIndex/이전": None(삭제)} 를 한 번에 반영."""
+    if not updates:
         return
     if FIREBASE_DB_URL:
-        _firebase_request("PATCH", _firebase_url(), changes)
+        _firebase_request("PATCH", _firebase_url(""), updates)
         return
-    data = load_all()
-    for key, code in changes.items():
-        qid, member = key.split("/", 1)
-        data.setdefault(qid, {})[member] = code
-    with open(LOCAL_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    data = _local_load()
+    for path, value in updates.items():
+        parts = [p for p in path.split("/") if p]
+        node = data
+        for part in parts[:-1]:
+            if not isinstance(node.get(part), dict):
+                node[part] = {}
+            node = node[part]
+        if value is None:
+            node.pop(parts[-1], None)
+        else:
+            node[parts[-1]] = value
+    _local_save(data)
 
 
 def _is_template(code):
@@ -150,32 +192,79 @@ def _is_template(code):
     return norm(code) == norm(DEFAULT_CODE)
 
 
-def compute_changes(incoming, current, allow_template=False):
-    """받은 전체 데이터에서 실제로 저장해야 할 칸만 골라낸다."""
-    changes = {}
-    if not isinstance(incoming, dict):
-        return changes
-    for qid, members in incoming.items():
-        if not (str(qid).isdigit() and int(qid) in QUESTION_RANGE and isinstance(members, dict)):
-            continue
-        for member, code in members.items():
-            if member not in FIXED_MEMBERS or not isinstance(code, str) or len(code) > MAX_CODE_LEN:
-                continue
-            old = current.get(str(qid), {}).get(member)
-            if code == old:
-                continue
-            # 기본 템플릿이 이미 저장된 실제 풀이를 덮어쓰지 않도록 방지
-            # (시드 데이터는 줄 끝 공백이 달라 == 비교로는 걸러지지 않으므로 정규화해서 비교)
-            # (사용자가 초기화 버튼을 눌러 reset=1 로 보낸 경우는 예외)
-            if old and _is_template(code) and not allow_template:
-                continue
-            changes[f"{int(qid)}/{member}"] = code
-    return changes
+def load_solutions(uids=None):
+    """{문제번호: {uid: 코드}}. uids 를 주면 해당 사용자 칸만 돌려준다."""
+    raw = _as_dict(db_get("solutions"))
+    out = {}
+    for qid, cells in raw.items():
+        cells = _as_dict(cells)
+        if uids is not None:
+            cells = {u: c for u, c in cells.items() if u in uids}
+        if cells:
+            out[str(qid)] = cells
+    return out
+
+
+def name_key(display_name):
+    return display_name.strip().lower()
+
+
+# ---------------------------------------------------------------- auth
+class AuthError(Exception):
+    pass
+
+
+def verify_token(token):
+    """Firebase ID 토큰을 검증해 클레임(dict, 'uid' 포함)을 돌려준다. 실패하면 AuthError."""
+    if DEV_AUTH_BYPASS and token.startswith("dev:"):
+        uid = token[4:]
+        if not re.match(r"^[A-Za-z0-9_\-]{1,40}$", uid):
+            raise AuthError("bad dev token")
+        return {"uid": uid, "email": f"{uid}@{FAKE_EMAIL_DOMAIN}", "firebase": {"sign_in_provider": "password"}}
+    if not FIREBASE_PROJECT_ID:
+        raise AuthError("서버에 FIREBASE_PROJECT_ID 가 설정되지 않았습니다")
+    try:
+        import google.auth.transport.requests
+        from google.oauth2 import id_token
+        claims = id_token.verify_firebase_token(
+            token, google.auth.transport.requests.Request(),
+            audience=FIREBASE_PROJECT_ID, clock_skew_in_seconds=10)
+    except Exception as e:
+        raise AuthError(str(e))
+    if not claims or not claims.get("sub"):
+        raise AuthError("invalid token")
+    claims["uid"] = claims["sub"]
+    return claims
+
+
+def _login_id_from_claims(claims):
+    """아이디 방식 가입자(가짜 이메일)면 loginId 를, Google 등 그 외는 None 을 돌려준다."""
+    email = (claims.get("email") or "").lower()
+    suffix = "@" + FAKE_EMAIL_DOMAIN
+    if email.endswith(suffix):
+        return email[:-len(suffix)]
+    return None
+
+
+def _email_public(claims):
+    """실제 이메일이면 돌려주고, 아이디 방식의 내부용 가짜 이메일이면 None."""
+    email = (claims.get("email") or "").lower()
+    return None if not email or email.endswith("@" + FAKE_EMAIL_DOMAIN) else email
+
+
+def _profile_public(uid, user):
+    return {"uid": uid, "displayName": user.get("displayName", ""), "loginId": user.get("loginId")}
 
 
 # ---------------------------------------------------------------- http
+class ApiError(Exception):
+    def __init__(self, status, code, message=""):
+        super().__init__(message or code)
+        self.status, self.code, self.message = status, code, message or code
+
+
 class Handler(http.server.BaseHTTPRequestHandler):
-    server_version = "CodingMasters/1.0"
+    server_version = "CodingMasters/2.0"
 
     def log_message(self, fmt, *args):
         sys.stdout.write("%s - %s\n" % (self.address_string(), fmt % args))
@@ -187,8 +276,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
         self.wfile.write(body)
 
@@ -202,54 +291,221 @@ class Handler(http.server.BaseHTTPRequestHandler):
         full = os.path.join(BASE_DIR, *parts)
         return os.path.splitext(full)[1] in CONTENT_TYPES and os.path.isfile(full)
 
+    def _claims(self):
+        header = self.headers.get("Authorization", "")
+        if not header.startswith("Bearer ") or len(header) < 10:
+            raise ApiError(401, "unauthorized", "로그인이 필요합니다")
+        try:
+            return verify_token(header[7:].strip())
+        except AuthError as e:
+            print(f"[AUTH FAIL] {e}")
+            raise ApiError(401, "unauthorized", "로그인이 만료되었거나 올바르지 않습니다")
+
+    def _body(self):
+        length = int(self.headers.get("Content-Length", 0))
+        if length > 200_000:
+            raise ApiError(413, "too_large")
+        try:
+            data = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
+        except ValueError:
+            raise ApiError(400, "bad_json")
+        if not isinstance(data, dict):
+            raise ApiError(400, "bad_json")
+        return data
+
+    def _dispatch(self, fn):
+        try:
+            fn()
+        except ApiError as e:
+            self._json(e.status, {"error": e.code, "message": e.message})
+        except Exception as e:  # DB 장애 등
+            print(f"[SERVER ERROR] {self.command} {self.path}: {e!r}")
+            self._json(500, {"error": "server_error", "message": str(e)})
+
     def do_OPTIONS(self):
         self._send(204)
 
+    # ----- GET
     def do_GET(self):
-        path = urllib.parse.urlparse(self.path).path
-        if path in ("/api/sync", "/api/load"):
-            try:
-                self._json(200, load_all())
-            except Exception as e:
-                print(f"[LOAD ERROR] {e}")
-                self._json(502, {"error": str(e)})
-        elif path == "/api/version":
-            self._json(200, {"version": f"{_version_prefix}-{_version_counter}"})
-        elif path == "/healthz":
-            self._send(200, b"ok", "text/plain")
-        elif path in STATIC_FILES or self._is_static_asset(path):
+        self._dispatch(self._get)
+
+    def _get(self):
+        parsed = urllib.parse.urlparse(self.path)
+        path, query = parsed.path, urllib.parse.parse_qs(parsed.query)
+
+        if path == "/api/version":
+            return self._json(200, {"version": f"{_version_prefix}-{_version_counter}"})
+        if path == "/healthz":
+            return self._send(200, b"ok", "text/plain")
+        if path == "/api/check":
+            return self._json(200, self._check(query))
+        if path == "/api/me":
+            return self._me()
+        if path == "/api/users":
+            return self._users()
+        if path == "/api/sync":
+            return self._sync(query)
+        if path in STATIC_FILES or self._is_static_asset(path):
             name = STATIC_FILES.get(path) or path.lstrip("/")
             with open(os.path.join(BASE_DIR, name), "rb") as f:
                 body = f.read()
-            self._send(200, body, CONTENT_TYPES[os.path.splitext(name)[1]])
-        else:
-            self._send(404, b"not found", "text/plain")
+            return self._send(200, body, CONTENT_TYPES[os.path.splitext(name)[1]])
+        self._send(404, b"not found", "text/plain")
 
+    def _check(self, query):
+        login_id = (query.get("loginId", [""])[0]).strip().lower()
+        name = (query.get("name", [""])[0]).strip()
+        out = {}
+        if login_id:
+            out["loginIdValid"] = bool(LOGIN_ID_RE.match(login_id))
+            out["loginIdTaken"] = bool(out["loginIdValid"] and db_get(f"loginIndex/{login_id}"))
+        if name:
+            out["nameValid"] = bool(DISPLAY_NAME_RE.match(name))
+            out["nameTaken"] = bool(out["nameValid"] and db_get(f"nameIndex/{name_key(name)}"))
+        return out
+
+    def _me(self):
+        claims = self._claims()
+        uid = claims["uid"]
+        user = db_get(f"users/{uid}")
+        if not user:
+            raise ApiError(404, "no_profile", "프로필이 없습니다. 표시 이름을 먼저 등록해 주세요")
+        out = _profile_public(uid, user)
+        out["email"] = _email_public(claims)
+        out["tempPassword"] = bool(user.get("tempPassword"))
+        out["provider"] = (claims.get("firebase") or {}).get("sign_in_provider")
+        self._json(200, out)
+
+    def _users(self):
+        self._claims()
+        users = _as_dict(db_get("users"))
+        counts = {}
+        for cells in load_solutions().values():
+            for uid, code in cells.items():
+                if isinstance(code, str) and not _is_template(code):
+                    counts[uid] = counts.get(uid, 0) + 1
+        result = []
+        for uid, user in users.items():
+            if not isinstance(user, dict):
+                continue
+            item = _profile_public(uid, user)
+            item["solvedCount"] = counts.get(uid, 0)
+            result.append(item)
+        result.sort(key=lambda u: u["displayName"])
+        self._json(200, {"users": result})
+
+    def _sync(self, query):
+        claims = self._claims()
+        uids = {claims["uid"]}
+        for chunk in query.get("users", []):
+            uids.update(u for u in chunk.split(",") if re.match(r"^[A-Za-z0-9_\-]{1,40}$", u))
+        if len(uids) > 6:  # 나 + 최대 5명
+            raise ApiError(400, "too_many_users", "한 번에 조회할 수 있는 사용자 수를 초과했습니다")
+        self._json(200, load_solutions(uids))
+
+    # ----- POST / PATCH
     def do_POST(self):
+        self._dispatch(self._post)
+
+    def do_PATCH(self):
+        self._dispatch(self._patch)
+
+    def _post(self):
+        path = urllib.parse.urlparse(self.path).path
+        if path == "/api/profile":
+            return self._create_profile()
+        if path == "/api/solution":  # PATCH 를 못 쓰는 환경 대비
+            return self._save_solution()
+        self._send(404, b"not found", "text/plain")
+
+    def _patch(self):
+        path = urllib.parse.urlparse(self.path).path
+        if path == "/api/profile":
+            return self._update_profile()
+        if path == "/api/solution":
+            return self._save_solution()
+        self._send(404, b"not found", "text/plain")
+
+    def _create_profile(self):
+        claims = self._claims()
+        uid = claims["uid"]
+        data = self._body()
+        name = str(data.get("displayName", "")).strip()
+        if not DISPLAY_NAME_RE.match(name):
+            raise ApiError(400, "bad_name", "표시 이름은 2~12자의 한글/영문/숫자/_/-/공백만 쓸 수 있습니다")
+        login_id = _login_id_from_claims(claims)
+        if login_id is not None and not LOGIN_ID_RE.match(login_id):
+            raise ApiError(400, "bad_login_id", "아이디는 영문 소문자/숫자/_ 4~20자여야 합니다")
+        with _lock:
+            if db_get(f"users/{uid}"):
+                raise ApiError(409, "profile_exists", "이미 프로필이 있습니다")
+            if db_get(f"nameIndex/{name_key(name)}"):
+                raise ApiError(409, "name_taken", "이미 사용 중인 표시 이름입니다")
+            updates = {
+                f"users/{uid}": {"displayName": name, "loginId": login_id, "createdAt": int(time.time())},
+                f"nameIndex/{name_key(name)}": uid,
+            }
+            if login_id:
+                if db_get(f"loginIndex/{login_id}"):
+                    raise ApiError(409, "login_id_taken", "이미 사용 중인 아이디입니다")
+                updates[f"loginIndex/{login_id}"] = uid
+            db_update(updates)
+        print(f"[PROFILE] created uid={uid} name={name}")
+        out = _profile_public(uid, {"displayName": name, "loginId": login_id})
+        out["email"] = _email_public(claims)
+        self._json(200, out)
+
+    def _update_profile(self):
+        claims = self._claims()
+        uid = claims["uid"]
+        data = self._body()
+        with _lock:
+            user = db_get(f"users/{uid}")
+            if not user:
+                raise ApiError(404, "no_profile", "프로필이 없습니다")
+            updates = {}
+            if "displayName" in data:
+                name = str(data["displayName"]).strip()
+                if not DISPLAY_NAME_RE.match(name):
+                    raise ApiError(400, "bad_name", "표시 이름은 2~12자의 한글/영문/숫자/_/-/공백만 쓸 수 있습니다")
+                old = user.get("displayName", "")
+                if name_key(name) != name_key(old):
+                    owner = db_get(f"nameIndex/{name_key(name)}")
+                    if owner and owner != uid:
+                        raise ApiError(409, "name_taken", "이미 사용 중인 표시 이름입니다")
+                    if old:
+                        updates[f"nameIndex/{name_key(old)}"] = None
+                    updates[f"nameIndex/{name_key(name)}"] = uid
+                updates[f"users/{uid}/displayName"] = name
+            if data.get("tempPasswordDone"):
+                updates[f"users/{uid}/tempPassword"] = None
+            db_update(updates)
+            user = db_get(f"users/{uid}") or user
+        self._json(200, _profile_public(uid, user))
+
+    def _save_solution(self):
         global _version_counter
-        parsed = urllib.parse.urlparse(self.path)
-        path = parsed.path
-        is_reset = urllib.parse.parse_qs(parsed.query).get("reset") == ["1"]
-        if path not in ("/api/sync", "/api/save"):
-            self._send(404, b"not found", "text/plain")
-            return
-        try:
-            length = int(self.headers.get("Content-Length", 0))
-            if length > 5_000_000:
-                self._json(413, {"status": "error", "message": "too large"})
-                return
-            incoming = json.loads(self.rfile.read(length).decode("utf-8"))
-            with _lock:
-                changes = compute_changes(incoming, load_all(), allow_template=is_reset)
-                save_changes(changes)
-                if changes:
-                    _version_counter += 1
-            if changes:
-                print(f"[SAVE OK] {len(changes)} cell(s): {', '.join(changes)[:200]}")
-            self._json(200, {"status": "success", "changed": len(changes)})
-        except Exception as e:
-            print(f"[SAVE ERROR] {e}")
-            self._json(500, {"status": "error", "message": str(e)})
+        claims = self._claims()
+        uid = claims["uid"]  # 클라이언트가 보낸 uid/이름은 쓰지 않는다 → 내 칸에만 저장
+        data = self._body()
+        qid, code = data.get("questionId"), data.get("code")
+        if not (isinstance(qid, int) and not isinstance(qid, bool) and qid in QUESTION_RANGE):
+            raise ApiError(400, "bad_question", "문제 번호가 올바르지 않습니다")
+        if not isinstance(code, str) or len(code) > MAX_CODE_LEN:
+            raise ApiError(400, "bad_code", "코드가 올바르지 않거나 너무 깁니다")
+        with _lock:
+            if not db_get(f"users/{uid}"):
+                raise ApiError(403, "no_profile", "프로필을 먼저 등록해 주세요")
+            old = db_get(f"solutions/{qid}/{uid}")
+            if code == old:
+                return self._json(200, {"status": "success", "changed": 0})
+            # 기본 템플릿이 이미 저장된 실제 풀이를 덮어쓰지 않도록 방지 (초기화 버튼은 reset=true)
+            if old and _is_template(code) and not data.get("reset"):
+                return self._json(200, {"status": "success", "changed": 0})
+            db_update({f"solutions/{qid}/{uid}": code})
+            _version_counter += 1
+        print(f"[SAVE OK] uid={uid} q={qid}")
+        self._json(200, {"status": "success", "changed": 1})
 
 
 class ThreadedServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
@@ -257,9 +513,38 @@ class ThreadedServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     allow_reuse_address = True
 
 
+def startup_check():
+    """시작할 때 설정을 점검해 문제의 원인을 알려 준다 (비밀 값은 출력하지 않는다)."""
+    print("[점검] FIREBASE_DB_URL:", FIREBASE_DB_URL or "(비어 있음 → 로컬 파일 모드)")
+    if not FIREBASE_DB_URL:
+        return
+    if FIREBASE_SERVICE_ACCOUNT_JSON:
+        try:
+            info = json.loads(FIREBASE_SERVICE_ACCOUNT_JSON)
+            ok_keys = all(k in info for k in ("type", "project_id", "private_key", "client_email"))
+            print(f"[점검] FIREBASE_SERVICE_ACCOUNT_JSON: JSON 해석 OK, 필수 항목 {'있음' if ok_keys else '누락'}, project_id={info.get('project_id')}")
+            if info.get("project_id") != FIREBASE_PROJECT_ID:
+                print(f"[점검][주의] 서비스 계정 project_id({info.get('project_id')}) 와 FIREBASE_PROJECT_ID({FIREBASE_PROJECT_ID}) 가 다릅니다")
+        except ValueError:
+            print("[점검][실패] FIREBASE_SERVICE_ACCOUNT_JSON 이 올바른 JSON이 아닙니다 "
+                  f"(길이 {len(FIREBASE_SERVICE_ACCOUNT_JSON)}자, 첫 글자 {FIREBASE_SERVICE_ACCOUNT_JSON[:1]!r}). "
+                  "서비스 계정 JSON 내용을 줄바꿈 없이 한 줄로 넣어야 합니다.")
+            return
+    else:
+        print("[점검] FIREBASE_SERVICE_ACCOUNT_JSON: 비어 있음 (DB 규칙이 막혀 있으면 읽기/쓰기가 실패합니다)")
+    try:
+        db_get("users")
+        print("[점검][성공] Firebase DB 읽기 성공")
+    except Exception as e:
+        print(f"[점검][실패] Firebase DB 읽기 실패: {e}")
+
+
 if __name__ == "__main__":
-    mode = "Firebase" if FIREBASE_DB_URL else "로컬 JSON 파일(테스트용)"
-    print(f"[CODING MASTERS] port={PORT} storage={mode}")
+    mode = "Firebase" if FIREBASE_DB_URL else "로컬 JSON 파일(테스트용: local_db.json)"
+    print(f"[CODING MASTERS] port={PORT} storage={mode} auth_project={FIREBASE_PROJECT_ID or '(미설정)'}"
+          + (" DEV_AUTH_BYPASS=ON" if DEV_AUTH_BYPASS else ""))
+    sys.stdout.flush()
+    startup_check()
     sys.stdout.flush()
     try:
         ThreadedServer(("0.0.0.0", PORT), Handler).serve_forever()

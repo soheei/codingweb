@@ -1,4 +1,5 @@
-import { DEFAULT_CODE, FIXED_MEMBERS, STATE } from './config.js';
+import { DEFAULT_CODE, STATE, escapeHtml, nameOf } from './config.js';
+import { fetchSolutions } from './storage.js';
 import { showToast } from './ui.js';
 
 /* ==========================================================================
@@ -12,10 +13,14 @@ export function setupNotebookExport() {
   const skipTemplate = document.getElementById("notebook-skip-template");
   if (!modal) return;
 
-  memberSelect.innerHTML = FIXED_MEMBERS.map(m => `<option value="${m}">${m}</option>`).join("");
+  const renderOptions = () => {
+    memberSelect.innerHTML = STATE.users.map(u => `<option value="${escapeHtml(u.uid)}">${escapeHtml(u.displayName)}${u.uid === STATE.me.uid ? " (나)" : ""}</option>`).join("");
+  };
+  renderOptions();
 
   const close = () => { modal.style.display = "none"; };
   document.getElementById("btn-open-notebook-modal").addEventListener("click", () => {
+    renderOptions();
     memberSelect.value = STATE.currentMember;
     modal.style.display = "flex";
   });
@@ -26,8 +31,10 @@ export function setupNotebookExport() {
   const toLines = (text) => text.split("\n").map((line, i, arr) => (i < arr.length - 1 ? line + "\n" : line));
   const normalize = (s) => s.split("\n").map(l => l.trimEnd()).join("\n").trim();
 
-  document.getElementById("btn-confirm-notebook").addEventListener("click", () => {
-    const member = memberSelect.value;
+  document.getElementById("btn-confirm-notebook").addEventListener("click", async () => {
+    const memberUid = memberSelect.value;
+    const member = nameOf(memberUid);
+    try { await fetchSolutions([STATE.me.uid, memberUid]); } catch (e) { alert("풀이를 불러오지 못했습니다."); return; }
     let from = parseInt(fromInput.value, 10);
     let to = parseInt(toInput.value, 10);
     if (!Number.isInteger(from) || !Number.isInteger(to)) {
@@ -41,7 +48,7 @@ export function setupNotebookExport() {
       .filter(q => q.id >= from && q.id <= to)
       .sort((a, b) => a.id - b.id)
       .forEach(q => {
-        const code = (STATE.solutions[q.id] && STATE.solutions[q.id][member]) || "";
+        const code = (STATE.solutions[q.id] && STATE.solutions[q.id][memberUid]) || "";
         if (!code.trim()) return;
         if (skipTemplate.checked && normalize(code) === normalize(DEFAULT_CODE)) return;
         cells.push({
@@ -80,6 +87,6 @@ export function setupNotebookExport() {
     a.click();
     URL.revokeObjectURL(url);
     close();
-    showToast(`✓ ${member}님의 ${from}~${to}번 풀이 ${cells.length / 2}개를 노트북으로 내보냈습니다.`);
+    showToast(`${member}님의 ${from}~${to}번 풀이 ${cells.length / 2}개를 노트북으로 내보냈습니다.`);
   });
 }

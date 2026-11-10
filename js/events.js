@@ -1,6 +1,6 @@
 import { runAllMembersSimultaneously, toggleDiffMode } from './compare.js';
-import { DEFAULT_CODE, STATE } from './config.js';
-import { loadCurrentMemberCode, loadQuestion, loadSampleInputForQuestion, renderSidebarQuestions } from './navigation.js';
+import { DEFAULT_CODE, STATE, isViewingOther, nameOf } from './config.js';
+import { loadCurrentMemberCode, loadQuestion, loadSampleInputForQuestion, renderMemberTabs, renderSidebarQuestions, switchOwner } from './navigation.js';
 import { runCode } from './runner.js';
 import { executeSave, loadInitialSolutions, updateSaveStatus } from './storage.js';
 import { showToast } from './ui.js';
@@ -13,30 +13,9 @@ export function setupEventListeners() {
   document.getElementById("filter-difficulty").addEventListener("change", renderSidebarQuestions);
   document.getElementById("filter-category").addEventListener("change", renderSidebarQuestions);
 
-  // 1. 수동 저장 버튼들 (상단 헤더 & 에디터 상단)
-  document.getElementById("btn-manual-save")?.addEventListener("click", () => {
-    executeSave(true);
-  });
+  // 1. 저장 버튼 (에디터 상단) — Ctrl+S 도 동일하게 동작
   document.getElementById("btn-editor-save")?.addEventListener("click", () => {
     executeSave(true);
-  });
-
-  // 2. 자동 저장 토글 버튼
-  document.getElementById("btn-toggle-autosave")?.addEventListener("click", () => {
-    STATE.isAutoSaveEnabled = !STATE.isAutoSaveEnabled;
-    const btn = document.getElementById("btn-toggle-autosave");
-    const textEl = document.getElementById("autosave-toggle-text");
-    
-    if (STATE.isAutoSaveEnabled) {
-      btn.classList.add("active-toggle");
-      textEl.textContent = "자동저장 ON";
-      showToast("자동 저장이 활성화되었습니다 (작성 시 0.8초 후 자동 저장)");
-    } else {
-      btn.classList.remove("active-toggle");
-      textEl.textContent = "자동저장 OFF";
-      showToast("자동 저장이 꺼졌습니다. 상단의 [수동 저장] 또는 Ctrl+S로 저장하세요.");
-    }
-    updateSaveStatus(STATE.hasUnsavedChanges ? "dirty" : "saved");
   });
 
   // 3. 글로벌 키보드 단축키 (Ctrl + S: 수동 저장, Ctrl + Enter: 실행)
@@ -64,12 +43,21 @@ export function setupEventListeners() {
     document.getElementById("user-custom-input").value = "";
     document.getElementById("user-custom-input").focus();
   });
+  // 눌 때마다 문제 속 예제를 차례로 채운다 (예제 1 → 예제 2 → ... → 예제 1)
+  const sampleCursor = {};
   document.getElementById("btn-load-sample-input").addEventListener("click", () => {
     const q = STATE.questions.find(x => x.id === STATE.currentQuestionId);
-    if (q) {
-      loadSampleInputForQuestion(q);
-      showToast("이 문제의 추천 예제 입력값이 채워졌습니다.");
+    if (!q) return;
+    const next = sampleCursor[q.id] ?? 0;
+    const result = loadSampleInputForQuestion(q, next);
+    if (!result || result.count === 0) {
+      showToast("이 문제에는 채울 예제 입력이 없습니다.");
+      return;
     }
+    sampleCursor[q.id] = result.used + 1;
+    showToast(result.count > 1
+      ? `예제 ${result.used + 1} 입력을 채웠습니다. (전체 ${result.count}개)`
+      : "예제 입력을 채웠습니다.");
   });
 
   // 5-1. 입력/실행결과 패널 내리기 · 올리기
@@ -105,65 +93,34 @@ export function setupEventListeners() {
   document.getElementById("btn-toggle-diff-mode").addEventListener("click", toggleDiffMode);
   document.getElementById("btn-run-all-members")?.addEventListener("click", runAllMembersSimultaneously);
 
-  // 7. 지금 즉시 동기화 버튼
-  document.getElementById("btn-sync-now").addEventListener("click", async () => {
-    showToast("서버 및 클라우드 최신 풀이 확인 중...");
-    await loadInitialSolutions();
-    loadCurrentMemberCode();
-    renderSidebarQuestions();
-    showToast("최신 풀이 상태가 동기화되었습니다!");
-  });
-
   // 8. 기본 코드 초기화
   document.getElementById("btn-reset-template").addEventListener("click", () => {
+    if (isViewingOther()) return; // 남의 코드는 초기화할 수 없다
     if (confirm("코드를 기본 디폴트 상태로 되돌리시겠습니까?")) {
       STATE.editor.setValue(DEFAULT_CODE);
       executeSave(true, false, true);
     }
   });
 
-  // 9. JSON 파일 백업 (내보내기) - server.py의 team_solutions_db.json과 100% 동일한 이름 및 구조로 저장
-  document.getElementById("btn-export-data").addEventListener("click", () => {
-    // team_solutions_db.json 파일과 완벽히 동일한 데이터 구조
-    const blob = new Blob([JSON.stringify(STATE.solutions, null, 2)], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "team_solutions_db.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("✓ team_solutions_db.json 파일로 저장되었습니다.");
+  // 8-1. 다른 사람 코드를 내 코드로 복사 (내 코드 탭으로 돌아가 같은 문제의 내 칸에 덮어쓴다)
+  document.getElementById("btn-copy-to-mine")?.addEventListener("click", async () => {
+    if (!isViewingOther()) return;
+    const qId = STATE.currentQuestionId;
+    const owner = STATE.currentMember;
+    const code = STATE.editor.getValue();
+    const mine = STATE.solutions[qId] && STATE.solutions[qId][STATE.me.uid];
+    const hasMine = mine && mine.trim() && mine.trim() !== DEFAULT_CODE.trim();
+    if (hasMine && !confirm(`이 문제에 이미 작성한 내 코드가 있습니다.
+${nameOf(owner)}님의 코드로 덮어쓸까요?`)) return;
+    STATE.solutions[qId][STATE.me.uid] = code;
+    await switchOwner(STATE.me.uid);
+    STATE.hasUnsavedChanges = true;
+    await executeSave(true);
+    showToast(`${nameOf(owner)}님의 코드를 내 코드로 복사해 저장했습니다.`);
   });
 
-  // 10. JSON 파일 불러오기 (가져오기) - team_solutions_db.json 및 기존 백업 파일 완벽 지원
-  const fileInput = document.getElementById("file-import-input");
-  document.getElementById("btn-import-data").addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", (e) => {
-    // @ts-ignore
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        // @ts-ignore
-        const imported = JSON.parse(event.target.result);
-        // team_solutions_db.json 직접 구조 또는 { solutions: ... } 래핑 구조 둘 다 지원
-        const targetSolutions = imported.solutions ? imported.solutions : imported;
-        
-        if (targetSolutions && typeof targetSolutions === "object" && Object.keys(targetSolutions).length > 0) {
-          STATE.solutions = { ...STATE.solutions, ...targetSolutions };
-          await executeSave(true, true);
-          loadQuestion(STATE.currentQuestionId);
-          renderSidebarQuestions();
-          showToast("✓ team_solutions_db.json 파일이 성공적으로 로드되고 동기화되었습니다!");
-        } else {
-          alert("올바른 team_solutions_db.json 또는 풀이 백업 파일이 아닙니다.");
-        }
-      } catch (err) {
-        alert("JSON 파싱 에러: " + err.message);
-      }
-    };
-    reader.readAsText(file);
-    fileInput.value = "";
+  // 열려 있는 드롭다운은 바깥을 누르면 닫는다
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".owner-dd-menu.open").forEach(m => m.classList.remove("open"));
   });
 }

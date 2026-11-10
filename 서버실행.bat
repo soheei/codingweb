@@ -5,5 +5,5 @@ echo ===================================================
 echo [Coding Masters 100] 팀 스터디 서버를 시작합니다...
 echo ===================================================
 cd /d "%~dp0"
-python server.py
+python server_db.py
 pause

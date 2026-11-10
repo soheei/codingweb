@@ -177,3 +177,68 @@ export function setupColumnResizers() {
     if (l && r) { apply(l, r); refreshEditor(); }
   });
 }
+
+/* ==========================================================================
+   Terminal Resizer: 코드 입력창 아래 "입력값 / 실행 결과" 패널 높이를 위아래로 드래그해 조절
+   - 가운데 회색 막대(접기/펴기 버튼 줄)를 잡고 위아래로 끈다. 더블클릭하면 기본 높이로 복원.
+   ========================================================================== */
+const STORAGE_KEY_TERMINAL = "codingmasters_terminal_v1";
+
+export function setupTerminalResizer() {
+  const grid = document.querySelector(".editor-grid");
+  const bar = document.querySelector(".terminal-toggle-bar");
+  const panel = document.querySelector(".terminal-panel");
+  const inputSection = document.querySelector(".input-panel-section");
+  if (!grid || !bar || !panel) return;
+
+  const MIN = 90;
+  const isNarrow = () => window.matchMedia("(max-width: 860px)").matches;
+  const apply = (h) => grid.style.setProperty("--terminal-h", `${h}px`);
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY_TERMINAL));
+    if (saved && saved.h >= MIN) apply(saved.h);
+  } catch (e) { /* 무시 */ }
+
+  bar.title = "위아래로 드래그해서 입력/실행결과 패널 높이 조절 (더블클릭: 초기화)";
+
+  bar.addEventListener("pointerdown", (down) => {
+    if (down.target.closest("button")) return; // 접기/펴기 버튼은 그대로 동작
+    if (grid.classList.contains("terminal-collapsed")) return;
+    down.preventDefault();
+    bar.setPointerCapture(down.pointerId);
+    bar.classList.add("dragging");
+    document.body.classList.add("row-resizing");
+
+    const startY = down.clientY;
+    const startH = isNarrow() ? inputSection.getBoundingClientRect().height : panel.getBoundingClientRect().height;
+    const maxH = () => Math.max(MIN, grid.getBoundingClientRect().height - 140);
+    let h = startH;
+    let frame = 0;
+
+    const onMove = (e) => {
+      h = Math.round(Math.max(MIN, Math.min(maxH(), startH - (e.clientY - startY))));
+      apply(h);
+      if (!frame) frame = requestAnimationFrame(() => { frame = 0; STATE.editor?.refresh(); });
+    };
+    const onUp = () => {
+      bar.classList.remove("dragging");
+      document.body.classList.remove("row-resizing");
+      bar.removeEventListener("pointermove", onMove);
+      bar.removeEventListener("pointerup", onUp);
+      bar.removeEventListener("pointercancel", onUp);
+      try { localStorage.setItem(STORAGE_KEY_TERMINAL, JSON.stringify({ h })); } catch (e) { /* 무시 */ }
+      STATE.editor?.refresh();
+    };
+    bar.addEventListener("pointermove", onMove);
+    bar.addEventListener("pointerup", onUp);
+    bar.addEventListener("pointercancel", onUp);
+  });
+
+  bar.addEventListener("dblclick", (e) => {
+    if (e.target.closest("button")) return;
+    grid.style.removeProperty("--terminal-h");
+    try { localStorage.removeItem(STORAGE_KEY_TERMINAL); } catch (err) { /* 무시 */ }
+    STATE.editor?.refresh();
+  });
+}

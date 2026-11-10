@@ -123,13 +123,7 @@ print(a + b)
     template: defaultCode,
     testCases: [
       { input: "3\\n5", expected: "8" }
-    ],
-    sampleSolutions: {
-      "김민희": defaultCode,
-      "양소희": defaultCode,
-      "정호준": defaultCode,
-      "차승우": defaultCode
-    }
+    ]
   }));
 }
 

@@ -111,7 +111,7 @@ builtins.input = _safe_input
       appendTerminal(stderr, "error");
     }
     if (!stdout && !stderr) {
-      appendTerminal("✓ 실행이 완료되었습니다. (출력된 결과 없음: print() 함수 작성 여부를 확인하세요)", "system");
+      appendTerminal("실행이 완료되었습니다. (출력된 결과 없음: print() 함수 작성 여부를 확인하세요)", "system");
     }
 
   } catch (err) {
