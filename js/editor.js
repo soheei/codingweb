@@ -17,8 +17,7 @@ export function initCodeMirror() {
     indentWithTabs: false,
     extraKeys: {
       "Ctrl-Enter": () => runCode(),
-      "Cmd-Enter": () => runCode(),
-      "Ctrl-S": (cm) => { executeSave(true); },
+      "Cmd-Enter": () => runCode(),      "Ctrl-S": (cm) => { executeSave(true); },
       "Cmd-S": (cm) => { executeSave(true); },
       "Tab": (cm) => cm.replaceSelection("    ", "end")
     }

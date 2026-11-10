@@ -209,8 +209,9 @@ CACHE_REFRESH_SECS = float(os.environ.get("CACHE_REFRESH_SECS", "60"))
 LOG_MAX = 5000
 _cache_lock = threading.RLock()   # 메모리 연산만 짧게 잡는 락 (네트워크 호출 중에는 잡지 않는다)
 _reload_lock = threading.Lock()
-_cache = {"loaded": False, "loaded_at": 0.0, "solutions": {}, "users": {}, "counts": {}}
-_log = collections.deque()        # (버전 번호, 문제번호, uid, 코드 또는 None=삭제)
+# "passed": {문제번호: {uid: True}} — 문제 예제를 모두 통과한 풀이 (브라우저가 채점해서 알려 준다). "푼 문제"는 이것만 센다.
+_cache = {"loaded": False, "loaded_at": 0.0, "solutions": {}, "passed": {}, "users": {}, "counts": {}}
+_log = collections.deque()        # (버전 번호, 문제번호, uid, 코드 또는 None=삭제, 통과 여부)
 _log_floor = 0                    # 로그에서 밀려난 마지막 버전 번호 (이보다 오래된 since 는 전체 동기화)
 _users_rev = 0                    # 사용자 목록(이름/가입/탈퇴/푼 문제 수)이 바뀔 때마다 증가
 _stats = {"db_reads": 0, "db_writes": 0, "cache_reloads": 0}
@@ -220,12 +221,11 @@ def _clean_user(user):
     return {k: v for k, v in user.items() if v is not None}
 
 
-def _count_solved(cells_by_q):
+def _count_solved(passed_by_q):
     counts = {}
-    for cells in cells_by_q.values():
-        for uid, code in cells.items():
-            if isinstance(code, str) and not _is_template(code):
-                counts[uid] = counts.get(uid, 0) + 1
+    for passed in passed_by_q.values():
+        for uid in passed:
+            counts[uid] = counts.get(uid, 0) + 1
     return counts
 
 
@@ -233,8 +233,8 @@ def _bump(cells=(), users=False):
     """_cache_lock 을 잡은 상태에서 호출. 버전을 올리고 바뀐 칸을 변경 로그에 남긴다."""
     global _version_counter, _log_floor, _users_rev
     _version_counter += 1
-    for qid, uid, code in cells:
-        _log.append((_version_counter, str(qid), uid, code))
+    for qid, uid, code, passed in cells:
+        _log.append((_version_counter, str(qid), uid, code, passed))
     while len(_log) > LOG_MAX:
         _log_floor = _log.popleft()[0]
     if users:
@@ -249,6 +249,11 @@ def _cache_reload_locked():
     for qid, cells in _as_dict(db_get("solutions")).items():
         cells = _as_dict(cells)
         solutions[str(qid)] = {u: c for u, c in cells.items() if isinstance(c, str)}
+    passed = {}
+    for qid, flags in _as_dict(db_get("passed")).items():
+        ok = {u: True for u, f in _as_dict(flags).items() if f is True and u in solutions.get(str(qid), {})}
+        if ok:
+            passed[str(qid)] = ok
     users = {uid: _clean_user(u) for uid, u in _as_dict(db_get("users")).items() if isinstance(u, dict)}
     with _cache_lock:
         if _cache["loaded"] and _version_counter != start_seq:
@@ -257,19 +262,20 @@ def _cache_reload_locked():
             return
         diff_cells, users_changed = [], False
         if _cache["loaded"]:
-            old = _cache["solutions"]
+            old, old_passed = _cache["solutions"], _cache["passed"]
             for qid, cells in solutions.items():
                 for uid, code in cells.items():
-                    if old.get(qid, {}).get(uid) != code:
-                        diff_cells.append((qid, uid, code))
+                    now_ok = uid in passed.get(qid, {})
+                    if old.get(qid, {}).get(uid) != code or (uid in old_passed.get(qid, {})) != now_ok:
+                        diff_cells.append((qid, uid, code, now_ok))
             for qid, cells in old.items():
                 for uid in cells:
                     if uid not in solutions.get(qid, {}):
-                        diff_cells.append((qid, uid, None))
+                        diff_cells.append((qid, uid, None, False))
             users_changed = users != _cache["users"]
         was_loaded = _cache["loaded"]
-        _cache["solutions"], _cache["users"] = solutions, users
-        _cache["counts"] = _count_solved(solutions)
+        _cache["solutions"], _cache["passed"], _cache["users"] = solutions, passed, users
+        _cache["counts"] = _count_solved(passed)
         _cache["loaded"], _cache["loaded_at"] = True, time.time()
         _stats["cache_reloads"] += 1
         if was_loaded and (diff_cells or users_changed):
@@ -329,20 +335,30 @@ def _cache_put_user(uid, user, bump=True):
             _bump(users=True)
 
 
-def _cache_set_cell(qid, uid, code):
+def cached_passed(qid, uid):
+    _cache_ensure()
+    with _cache_lock:
+        return uid in _cache["passed"].get(str(qid), {})
+
+
+def _cache_set_cell(qid, uid, code, passed=False):
     with _cache_lock:
         cells = _cache["solutions"].setdefault(str(qid), {})
-        old = cells.get(uid)
+        flags = _cache["passed"].setdefault(str(qid), {})
+        was = uid in flags
+        passed = bool(passed) and code is not None
         if code is None:
             cells.pop(uid, None)
         else:
             cells[uid] = code
-        was = isinstance(old, str) and not _is_template(old)
-        now = isinstance(code, str) and not _is_template(code)
-        delta = (1 if now else 0) - (1 if was else 0)
+        if passed:
+            flags[uid] = True
+        else:
+            flags.pop(uid, None)
+        delta = (1 if passed else 0) - (1 if was else 0)
         if delta:
             _cache["counts"][uid] = max(0, _cache["counts"].get(uid, 0) + delta)
-        _bump(cells=[(qid, uid, code)], users=bool(delta))
+        _bump(cells=[(qid, uid, code, passed)], users=bool(delta))
 
 
 def _cache_remove_user(uid):
@@ -351,7 +367,9 @@ def _cache_remove_user(uid):
         for qid, cells in _cache["solutions"].items():
             if uid in cells:
                 cells.pop(uid)
-                gone.append((qid, uid, None))
+                gone.append((qid, uid, None, False))
+        for flags in _cache["passed"].values():
+            flags.pop(uid, None)
         _cache["users"].pop(uid, None)
         _cache["counts"].pop(uid, None)
         _bump(cells=gone, users=True)
@@ -379,14 +397,19 @@ def cache_sync(uids, since):
         m = re.match(r"^(\d+)-(\d+)$", since or "")
         if m and m.group(1) == _version_prefix and int(m.group(2)) >= _log_floor and int(m.group(2)) <= _version_counter:
             n = int(m.group(2))
-            cells = [[q, u, c] for (seq, q, u, c) in _log if seq > n and u in uids]
+            cells = [[q, u, c, p] for (seq, q, u, c, p) in _log if seq > n and u in uids]
             return {"mode": "delta", "cells": cells, **base}
         solutions = {}
         for qid, cells in _cache["solutions"].items():
             picked = {u: c for u, c in cells.items() if u in uids}
             if picked:
                 solutions[qid] = picked
-        return {"mode": "full", "solutions": solutions, **base}
+        passed = {}
+        for qid, flags in _cache["passed"].items():
+            picked = {u: True for u in flags if u in uids}
+            if picked:
+                passed[qid] = picked
+        return {"mode": "full", "solutions": solutions, "passed": passed, **base}
 
 
 # ---------------------------------------------------------------- auth
@@ -690,6 +713,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     updates[f"loginIndex/{login_id}"] = None
             for qid in QUESTION_RANGE:
                 updates[f"solutions/{qid}/{uid}"] = None
+                updates[f"passed/{qid}/{uid}"] = None
             db_update(updates)
             _cache_remove_user(uid)  # 캐시에서도 지우고 버전을 올려 다른 사용자의 화면이 곧바로 갱신되게 한다
         print(f"[ACCOUNT] deleted uid={uid}")
@@ -858,13 +882,20 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if not cached_user(uid):
                 raise ApiError(403, "no_profile", "프로필을 먼저 등록해 주세요")
             old = cached_cell(qid, uid)
-            if code == old:
+            old_passed = cached_passed(qid, uid)
+            # passed: 이 코드가 예제를 모두 통과했는지(브라우저 채점 결과). 안 보내면 코드가 그대로일 때만 이전 값을 유지한다.
+            new_passed = data.get("passed")
+            if new_passed is None:
+                new_passed = old_passed if code == old else False
+            elif not isinstance(new_passed, bool):
+                raise ApiError(400, "bad_passed", "통과 여부가 올바르지 않습니다")
+            if code == old and new_passed == old_passed:
                 return self._json(200, {"status": "success", "changed": 0})
             # 기본 템플릿이 이미 저장된 실제 풀이를 덮어쓰지 않도록 방지 (초기화 버튼은 reset=true)
             if old and _is_template(code) and not data.get("reset"):
                 return self._json(200, {"status": "success", "changed": 0})
-            db_update({f"solutions/{qid}/{uid}": code})
-            _cache_set_cell(qid, uid, code)  # 쓰기 성공 후 캐시/변경 로그/버전 갱신
+            db_update({f"solutions/{qid}/{uid}": code, f"passed/{qid}/{uid}": True if new_passed else None})
+            _cache_set_cell(qid, uid, code, new_passed)  # 쓰기 성공 후 캐시/변경 로그/버전 갱신
         print(f"[SAVE OK] uid={uid} q={qid}")
         self._json(200, {"status": "success", "changed": 1})
 

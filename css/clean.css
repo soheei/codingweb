@@ -111,7 +111,7 @@ button, select, input, textarea { font-family: inherit; }
 /* ---------- 에디터 상단 탭 / 도구 ---------- */
 .editor-header { background: #fff; border-bottom: 1px solid var(--border-color); }
 .editor-header .member-tab {
-  font-size: 0.8125rem; padding: 0 14px; color: var(--text-muted); border-bottom: 2px solid transparent; transition: color 0.15s, background-color 0.15s;
+  font-size: 0.8125rem; padding: 0 8px; color: var(--text-muted); border-bottom: 2px solid transparent; transition: color 0.15s, background-color 0.15s;
 }
 .editor-header .member-tab:hover { color: var(--text-main); background: var(--bg-primary); }
 .editor-header .member-tab.active { color: var(--accent-color); font-weight: 600; background: transparent; border-bottom-color: var(--accent-color); }

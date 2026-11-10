@@ -178,3 +178,6 @@
 .status-badge.solved {
   color: #3b82f6;
 }
+.status-badge.failed {
+  color: #dc2626;
+}

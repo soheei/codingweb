@@ -37,7 +37,7 @@ export function setupEventListeners() {
     }
   });
 
-  // 4. 실행 및 클리어
+  // 4. 실행 및 클리어 (예제 입력으로 실행하면 정답 여부도 자동으로 가려진다)
   document.getElementById("btn-run-code").addEventListener("click", runCode);
   document.getElementById("btn-clear-term").addEventListener("click", () => {
     document.getElementById("terminal-output").innerHTML = "";

@@ -21,7 +21,7 @@
 .member-tabs {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
   height: 100%;
 }
 

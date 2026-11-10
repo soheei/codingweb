@@ -181,7 +181,7 @@ body.auth-locked .main-container { visibility: hidden; }
 body.row-resizing, body.row-resizing * { cursor: row-resize !important; user-select: none; }
 
 /* ---------- 추가한 사람 탭 ---------- */
-.member-tab.pinned { padding-right: 8px; cursor: pointer; }
+.member-tab.pinned { padding-right: 5px; cursor: pointer; }
 .member-tab.pinned .pinned-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tab-x { border: 0; background: transparent; color: #9ca3af; font-size: 15px; line-height: 1; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; }
 .tab-x:hover { background: #fecaca; color: #b91c1c; }

@@ -1,5 +1,5 @@
 import { exitDiffMode, renderCompareView, saveCompareSelection } from './compare.js';
-import { DEFAULT_CODE, MAX_COMPARE, MIN_COMPARE, STATE, moveItem, sortFavoritesFirst, toggleFavorite, STORAGE_KEY_VIEW, escapeHtml, isMe, isTemplateCode, isViewingOther, nameOf } from './config.js';
+import { DEFAULT_CODE, MAX_COMPARE, MIN_COMPARE, STATE, moveItem, sortFavoritesFirst, toggleFavorite, STORAGE_KEY_VIEW, escapeHtml, isMe, isViewingOther, nameOf } from './config.js';
 import { fetchSolutions, saveLocal, updateSaveStatus } from './storage.js';
 import { showToast } from './ui.js';
 
@@ -79,6 +79,22 @@ export function getSampleInputs(q) {
   return inputs
     .map(pre => pre.textContent.replace(/\r\n?/g, "\n").replace(/\s+$/, "").replace(/^\n+/, ""))
     .filter(text => text.length > 0);
+}
+
+// 문제 설명 속 "입력/출력" 예제 쌍을 읽어 채점용 테스트케이스로 돌려준다: [{ input, output }]
+export function getSampleCases(q) {
+  if (!q || !q.desc) return [];
+  const doc = new DOMParser().parseFromString(q.desc, "text/html");
+  const titleOf = (pre) => (pre.previousElementSibling ? pre.previousElementSibling.textContent.trim() : "");
+  const clean = (pre) => pre.textContent.replace(/\r\n?/g, "\n").replace(/^\n+/, "").replace(/\s+$/, "");
+  const cases = [];
+  let pending = null;
+  for (const pre of doc.querySelectorAll("pre")) {
+    const title = titleOf(pre);
+    if (title === "입력") pending = clean(pre);
+    else if (title === "출력" && pending !== null) { cases.push({ input: pending, output: clean(pre) }); pending = null; }
+  }
+  return cases;
 }
 
 // 입력창에 예제 입력을 채운다. index 번째 예제(0부터)를 쓰고, 채운 예제 정보를 돌려준다.
@@ -224,7 +240,7 @@ export function renderMemberTabs() {
   const dd = document.createElement("div");
   dd.className = "owner-dd";
   dd.innerHTML = `
-    <div class="member-tab owner-dd-btn"><i class="fa-solid fa-user-plus"></i> 다른 사람 추가 <i class="fa-solid fa-caret-down"></i></div>
+    <div class="member-tab owner-dd-btn"><i class="fa-solid fa-user-plus"></i> 추가 <i class="fa-solid fa-caret-down"></i></div>
     <div class="owner-dd-menu">
       <input type="text" class="owner-dd-search" placeholder="이름 검색..." spellcheck="false">
       <div class="owner-dd-list"></div>
@@ -287,6 +303,7 @@ export function renderSidebarQuestions() {
 
   filtered.forEach(q => {
     const isSolved = isSolvedByCurrentMember(q.id);
+    const isFailed = !isSolved && isMe(STATE.currentMember) && !!STATE.failed[q.id];
 
     const item = document.createElement("div");
     item.className = `q-item ${q.id === STATE.currentQuestionId ? "active" : ""}`;
@@ -298,8 +315,8 @@ export function renderSidebarQuestions() {
         <div class="q-item-title">${q.title}</div>
       </div>
       <div class="q-item-status">
-        <span class="status-badge ${isSolved ? 'solved' : ''}">
-          <i class="${isSolved ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'}"></i>
+        <span class="status-badge ${isSolved ? 'solved' : ''} ${isFailed ? 'failed' : ''}">
+          <i class="${isSolved ? 'fa-solid fa-circle-check' : isFailed ? 'fa-solid fa-circle-xmark' : 'fa-regular fa-circle'}"></i>
         </span>
       </div>
     `;
@@ -326,9 +343,9 @@ export function renderCategoryFilter() {
   });
 }
 
+// 완료 = 문제 예제 입력을 모두 넣어 실행했을 때 출력이 예제 출력과 같았던 풀이 (채점 결과는 서버에 함께 저장된다)
 export function isSolvedByCurrentMember(qId) {
-  const code = STATE.solutions[qId] && STATE.solutions[qId][STATE.currentMember];
-  return !!code && code.trim() !== "" && !isTemplateCode(code);
+  return !!(STATE.passed[qId] && STATE.passed[qId][STATE.currentMember]);
 }
 
 export function updateProgress() {

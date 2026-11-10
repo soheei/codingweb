@@ -49,6 +49,8 @@ export const STATE = {
   usersRev: null,      // 마지막으로 반영한 사용자 목록 버전
   favorites: [],       // 즐겨찾기(별표)한 사람 uid 목록 (선택 목록에서 맨 위에 표시)
   solutions: {},       // { [qId]: { [uid]: code } }
+  failed: {},          // { [qId]: true } — 이 화면에서 채점했더니 틀렸던 내 풀이 (사이드바 빨간 표시용, 저장하지 않음)
+  passed: {},         // { [qId]: { [uid]: true } } — 예제 입력/출력을 모두 통과한 풀이 ("완료" 표시는 이것만 쓴다)
   isDiffMode: false,
   pyodide: null,
   isPyodideReady: false,

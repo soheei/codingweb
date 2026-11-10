@@ -33,18 +33,24 @@ export async function fetchSolutions(uids = neededUids()) {
 
   const cells = body.mode === "delta"
     ? body.cells
-    : Object.entries(body.solutions || {}).flatMap(([qId, byUid]) => Object.entries(byUid).map(([uid, code]) => [qId, uid, code]));
+    : Object.entries(body.solutions || {}).flatMap(([qId, byUid]) =>
+        Object.entries(byUid).map(([uid, code]) => [qId, uid, code, !!(body.passed && body.passed[qId] && body.passed[qId][uid])]));
 
   let changed = false;
-  for (const [qId, uid, code] of cells) {
+  for (const [qId, uid, code, passed] of cells) {
     if (!STATE.solutions[qId]) STATE.solutions[qId] = {};
+    if (!STATE.passed[qId]) STATE.passed[qId] = {};
     const isEditingNow = (Number(qId) === STATE.currentQuestionId && isMe(uid) && STATE.hasUnsavedChanges);
     if (isEditingNow) continue;
     if (code === null) { // 상대가 풀이를 지움(탈퇴 등)
       if (uid in STATE.solutions[qId]) { delete STATE.solutions[qId][uid]; changed = true; }
-    } else if (typeof code === "string" && STATE.solutions[qId][uid] !== code) {
-      STATE.solutions[qId][uid] = code;
-      changed = true;
+      if (STATE.passed[qId][uid]) { delete STATE.passed[qId][uid]; changed = true; }
+    } else if (typeof code === "string") {
+      if (STATE.solutions[qId][uid] !== code) { STATE.solutions[qId][uid] = code; changed = true; }
+      if (!!STATE.passed[qId][uid] !== !!passed) {
+        if (passed) STATE.passed[qId][uid] = true; else delete STATE.passed[qId][uid];
+        changed = true;
+      }
     }
   }
   STATE.syncVersion = body.version;
@@ -90,6 +96,8 @@ export async function loadInitialSolutions() {
       const cached = JSON.parse(localStorage.getItem(cacheKey()) || "null");
       if (cached && typeof cached === "object") {
         STATE.solutions = cached;
+        const cachedPassed = JSON.parse(localStorage.getItem(cacheKey() + "_passed") || "null");
+        if (cachedPassed && typeof cachedPassed === "object") STATE.passed = cachedPassed;
         setSyncStatus("connected", "오프라인: 브라우저 저장소에서 불러옴");
       }
     } catch (e) { /* 무시 */ }
@@ -114,6 +122,11 @@ export function saveLocal() {
       if (typeof code === "string") mine[qId] = { [STATE.me.uid]: code };
     });
     localStorage.setItem(cacheKey(), JSON.stringify(mine));
+    const minePassed = {};
+    Object.keys(STATE.passed).forEach(qId => {
+      if (STATE.passed[qId] && STATE.passed[qId][STATE.me.uid]) minePassed[qId] = { [STATE.me.uid]: true };
+    });
+    localStorage.setItem(cacheKey() + "_passed", JSON.stringify(minePassed));
   } catch (e) { /* 저장소 사용 불가 시 무시 */ }
   updateProgress();
 }
@@ -131,6 +144,10 @@ export function handleEditorChange() {
     STATE.solutions[STATE.currentQuestionId] = {};
   }
 
+  // 코드가 바뀌면 이전 채점 결과는 더 이상 유효하지 않다 → 다시 채점해서 통과해야 완료로 표시된다
+  if (STATE.solutions[STATE.currentQuestionId][STATE.me.uid] !== currentCode) {
+    clearPassed(STATE.currentQuestionId);
+  }
   STATE.solutions[STATE.currentQuestionId][STATE.me.uid] = currentCode;
   STATE.hasUnsavedChanges = true;
   updateSaveStatus("dirty");
@@ -143,10 +160,21 @@ export function handleEditorChange() {
   }
 }
 
-async function saveCell(qId, code, reset = false) {
+// 내 풀이의 "예제 통과" 표시를 켜거나 끈다 (서버에는 저장할 때 코드와 함께 보낸다)
+export function setPassed(qId, passed) {
+  if (!STATE.passed[qId]) STATE.passed[qId] = {};
+  if (passed) { STATE.passed[qId][STATE.me.uid] = true; delete STATE.failed[qId]; }
+  else delete STATE.passed[qId][STATE.me.uid];
+}
+// 코드를 고치면 통과/오답 표시를 모두 지운다
+const clearPassed = (qId) => { setPassed(qId, false); delete STATE.failed[qId]; };
+const isPassed = (qId) => !!(STATE.passed[qId] && STATE.passed[qId][STATE.me.uid]);
+
+// passed 를 생략하면 서버가 코드가 그대로일 때만 기존 통과 표시를 유지한다
+async function saveCell(qId, code, reset = false, passed = undefined) {
   const res = await apiFetch("/api/solution", {
     method: "PATCH",
-    body: { questionId: Number(qId), code, reset }
+    body: { questionId: Number(qId), code, reset, ...(passed === undefined ? {} : { passed }) }
   });
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
@@ -168,7 +196,8 @@ export async function executeSave(isManual = false, saveAll = false, resetCurren
   try {
     const mine = (qId) => STATE.solutions[qId] && STATE.solutions[qId][STATE.me.uid];
     if (resetCurrent) {
-      await saveCell(STATE.currentQuestionId, DEFAULT_CODE, true);
+      clearPassed(STATE.currentQuestionId);
+      await saveCell(STATE.currentQuestionId, DEFAULT_CODE, true, false);
     } else if (saveAll) {
       for (const q of STATE.questions) {
         const code = mine(q.id);
@@ -177,7 +206,7 @@ export async function executeSave(isManual = false, saveAll = false, resetCurren
     } else {
       // 지금 보고 있는 문제의 내 풀이만 저장 (한 칸 단위 → 다른 사람 칸을 덮어쓸 일이 없다)
       const code = mine(STATE.currentQuestionId);
-      if (typeof code === "string") await saveCell(STATE.currentQuestionId, code);
+      if (typeof code === "string") await saveCell(STATE.currentQuestionId, code, false, isPassed(STATE.currentQuestionId));
     }
     ok = true;
   } catch (err) {
