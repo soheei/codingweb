@@ -114,6 +114,7 @@ export function setupComparePicker() {
     if (STATE.isDiffMode) await renderCompareView();
   });
   $("btn-change-compare").addEventListener("click", () => openComparePicker());
+  $("btn-reset-layout").addEventListener("click", () => resetCompareLayout());
 }
 
 /* ---------------------------------------------------------------- 모드 전환 */
@@ -302,6 +303,17 @@ function refreshEditors() {
 /* ---------------------------------------------------------------- 크기 조절 핸들 */
 // 핸들은 렌더링할 때 한 번만 만들고, 크기를 바꿀 때는 위치만 갱신한다
 // (드래그 중에 요소를 지우고 다시 만들면 포인터 추적이 끊긴다)
+// 카드 크기를 기본(균등 분할)으로 되돌린다 — 경계선 더블클릭, "창 크기 기본값" 버튼 공용
+function resetCompareLayout() {
+  if (maximized) return;
+  const n = $("quad-diff-container").querySelectorAll(".quad-card").length;
+  if (!n) return;
+  clearLayout(n);
+  resetSizes(n, false);
+  applyGridSizes();
+  requestAnimationFrame(() => { refreshEditors(); positionHandles(); });
+}
+
 function placeHandles() {
   const container = $("quad-diff-container");
   container.querySelectorAll(".resize-handle").forEach(h => h.remove());
@@ -315,12 +327,7 @@ function placeHandles() {
     h.dataset.type = type;
     h.dataset.idx = String(idx);
     h.title = "드래그: 크기 조절 / 더블클릭: 균등 분할";
-    h.addEventListener("dblclick", () => {
-      clearLayout(cards.length);
-      resetSizes(cards.length, false);
-      applyGridSizes();
-      requestAnimationFrame(() => { refreshEditors(); positionHandles(); });
-    });
+    h.addEventListener("dblclick", resetCompareLayout);
     h.addEventListener("pointerdown", (e) => startDrag(e, h, type, idx));
     container.appendChild(h);
   };
