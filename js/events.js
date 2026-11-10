@@ -1,6 +1,6 @@
 import { runAllMembersSimultaneously, toggleDiffMode } from './compare.js';
 import { DEFAULT_CODE, STATE, isViewingOther, nameOf } from './config.js';
-import { loadCurrentMemberCode, loadQuestion, loadSampleInputForQuestion, renderMemberTabs, renderSidebarQuestions, switchOwner } from './navigation.js';
+import { loadCurrentMemberCode, loadQuestion, loadSampleInputForQuestion, renderMemberTabs, renderSidebarQuestions, switchOwner, updateProgress } from './navigation.js';
 import { runCode } from './runner.js';
 import { executeSave, loadInitialSolutions, updateSaveStatus } from './storage.js';
 import { showToast } from './ui.js';
@@ -12,6 +12,11 @@ export function setupEventListeners() {
   document.getElementById("question-search").addEventListener("input", renderSidebarQuestions);
   document.getElementById("filter-difficulty").addEventListener("change", renderSidebarQuestions);
   document.getElementById("filter-category").addEventListener("change", renderSidebarQuestions);
+  document.getElementById("filter-round").addEventListener("change", (e) => {
+    STATE.round = Number(e.target.value);
+    renderSidebarQuestions();
+    updateProgress();
+  });
 
   // 1. 저장 버튼 (에디터 상단) — Ctrl+S 도 동일하게 동작
   document.getElementById("btn-editor-save")?.addEventListener("click", () => {

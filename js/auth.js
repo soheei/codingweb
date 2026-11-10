@@ -13,10 +13,6 @@ let loginResolve = null;
 const $ = (id) => document.getElementById(id);
 
 // 입력이 이메일이면 그대로, 아니면 아이디로 보고 내부용 이메일로 바꾼다 (기존 아이디 계정 호환)
-const toEmail = (input) => {
-  const v = input.trim().toLowerCase();
-  return v.includes("@") ? v : `${v}@${FAKE_EMAIL_DOMAIN}`;
-};
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const withTimeout = (promise, ms, label) => Promise.race([
@@ -65,6 +61,16 @@ async function publicFetch(path) {
   return res.json();
 }
 
+// 로그인 전 호출(토큰 없음). 실패하면 서버 메시지로 Error 를 던진다.
+async function publicPost(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST", cache: "no-store",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(await errMessage(res, "요청을 처리하지 못했습니다."));
+  return res.json();
+}
+
 async function errMessage(res, fallback) {
   try { return (await res.json()).message || fallback; } catch (e) { return fallback; }
 }
@@ -99,6 +105,7 @@ function authErrorText(e) {
     "auth/user-not-found": "아이디 또는 비밀번호가 올바르지 않습니다.",
     "auth/invalid-email": "이메일(또는 아이디) 형식이 올바르지 않습니다.",
     "auth/email-already-in-use": "이미 가입된 이메일입니다. 로그인해 주세요.",
+    "auth/invalid-new-email": "새 이메일 형식이 올바르지 않습니다.",
     "auth/weak-password": "비밀번호가 너무 약합니다. 8자 이상으로 입력해 주세요.",
     "auth/too-many-requests": "시도 횟수가 많아 잠시 막혔습니다. 잠시 후 다시 시도해 주세요.",
     "auth/network-request-failed": "네트워크 연결을 확인해 주세요.",
@@ -154,7 +161,12 @@ function bindAuthUi() {
     const pw = $("auth-login-pw").value;
     if (!id || !pw) return setError("이메일(또는 아이디)과 비밀번호를 입력해 주세요.");
     const { auth, mod } = await loadSdk();
-    await mod.signInWithEmailAndPassword(auth, toEmail(id), pw);
+    if (id.includes("@")) {
+      await mod.signInWithEmailAndPassword(auth, id, pw);
+    } else { // 아이디: 서버가 비밀번호를 확인하고 로그인 토큰을 준다
+      const { customToken } = await publicPost("/api/login", { id, password: pw });
+      await mod.signInWithCustomToken(auth, customToken);
+    }
     await afterSignedIn();
   });
   loginBtn.addEventListener("click", doLogin);
@@ -171,10 +183,15 @@ function bindAuthUi() {
   $("btn-auth-reset").addEventListener("click", async (e) => {
     e.preventDefault();
     setError("");
-    const v = $("auth-login-id").value.trim().toLowerCase();
-    if (!v.includes("@")) {
-      return setError("이메일을 위 입력칸에 먼저 입력해 주세요. (아이디로 만든 계정은 재설정 메일을 받을 수 없으니 관리자에게 문의하세요.)");
+    const input = $("auth-login-id").value.trim().toLowerCase();
+    if (!input) return setError("아이디 또는 이메일을 위 입력칸에 먼저 입력해 주세요.");
+    if (!input.includes("@")) { // 아이디: 서버가 등록된 이메일로 재설정 메일을 보낸다 (이메일 주소는 노출하지 않음)
+      try {
+        await publicPost("/api/password-reset", { id: input });
+        return showToast("등록된 이메일이 있으면 비밀번호 재설정 메일이 도착합니다. (이메일을 등록하지 않은 계정은 받을 수 없습니다)");
+      } catch (err) { return setError(err.message); }
     }
+    const v = input;
     if (v.endsWith("@" + FAKE_EMAIL_DOMAIN)) return setError("이 계정은 재설정 메일을 받을 수 없습니다. 관리자에게 문의하세요.");
     try {
       const { auth, mod } = await loadSdk();
@@ -324,13 +341,24 @@ export function setupAccountUi({ onNameChanged }) {
   const modal = $("settings-modal");
   const close = () => { modal.style.display = "none"; };
   const open = () => {
-    $("set-login-id").value = STATE.me.loginId || STATE.me.email || "(Google 계정)";
+    const isGoogle = STATE.me.provider === "google.com";
+    $("set-id-section").style.display = isGoogle ? "none" : "block";
+    $("set-google-row").style.display = isGoogle ? "block" : "none";
+    $("set-login-id").value = STATE.me.email || "(Google 계정)";
+    $("set-id").value = STATE.me.loginId || "";
+    $("set-id-msg").textContent = "";
+    $("set-email").value = STATE.me.email || "";
+    $("set-email-pw").value = "";
+    $("set-email-msg").textContent = "";
     $("set-name").value = STATE.me.displayName;
     $("set-name-msg").textContent = "";
     $("set-pw-msg").textContent = "";
     ["set-pw-cur", "set-pw-new", "set-pw-new2"].forEach(id => { $(id).value = ""; });
     $("set-temp-note").style.display = STATE.me.tempPassword ? "block" : "none";
     $("set-pw-section").style.display = STATE.me.provider === "google.com" ? "none" : "block";
+    $("set-del-pw").value = "";
+    $("set-del-msg").textContent = "";
+    $("set-del-pw-row").style.display = STATE.me.provider === "google.com" ? "none" : "";
     modal.style.display = "flex";
   };
   $("btn-open-settings").addEventListener("click", () => { chip.classList.remove("open"); open(); });
@@ -351,6 +379,36 @@ export function setupAccountUi({ onNameChanged }) {
       say("set-name-msg", "표시 이름이 변경되었습니다.", true);
       onNameChanged?.();
     } catch (e) { say("set-name-msg", authErrorText(e), false); }
+  });
+
+  $("btn-save-id").addEventListener("click", async () => {
+    const id = $("set-id").value.trim().toLowerCase();
+    if (id === (STATE.me.loginId || "")) return say("set-id-msg", "현재 아이디와 같습니다.", false);
+    if (!/^[a-z0-9_]{4,20}$/.test(id)) return say("set-id-msg", "아이디는 영문 소문자/숫자/_ 4~20자여야 합니다.", false);
+    try {
+      const res = await apiFetch("/api/profile", { method: "PATCH", body: { loginId: id } });
+      if (!res.ok) return say("set-id-msg", await errMessage(res, "아이디를 변경하지 못했습니다."), false);
+      STATE.me.loginId = (await res.json()).loginId;
+      $("set-id").value = STATE.me.loginId;
+      say("set-id-msg", "아이디가 변경되었습니다. 다음 로그인부터 새 아이디를 쓰세요.", true);
+    } catch (e) { say("set-id-msg", authErrorText(e), false); }
+  });
+
+  // 이메일 등록/변경: 새 이메일로 인증 메일을 보내고, 링크를 누르면 로그인 이메일이 바뀐다.
+  $("btn-save-email").addEventListener("click", async () => {
+    const email = $("set-email").value.trim().toLowerCase();
+    const pw = $("set-email-pw").value;
+    if (!EMAIL_RE.test(email) || email.endsWith("@" + FAKE_EMAIL_DOMAIN)) return say("set-email-msg", "올바른 이메일 주소를 입력해 주세요.", false);
+    if (email === (STATE.me.email || "")) return say("set-email-msg", "현재 이메일과 같습니다.", false);
+    if (!pw) return say("set-email-msg", "본인 확인을 위해 현재 비밀번호를 입력해 주세요.", false);
+    try {
+      const { auth, mod } = await loadSdk();
+      const user = auth.currentUser;
+      await mod.reauthenticateWithCredential(user, mod.EmailAuthProvider.credential(user.email, pw));
+      await mod.verifyBeforeUpdateEmail(user, email);
+      $("set-email-pw").value = "";
+      say("set-email-msg", `${email} 로 인증 메일을 보냈습니다. 메일의 링크를 누르면 등록이 완료되고, 그 뒤 다시 로그인해야 합니다.`, true);
+    } catch (e) { say("set-email-msg", authErrorText(e), false); }
   });
 
   $("btn-change-pw").addEventListener("click", async () => {
@@ -374,6 +432,42 @@ export function setupAccountUi({ onNameChanged }) {
       say("set-pw-msg", "비밀번호가 변경되었습니다.", true);
       showToast("비밀번호가 변경되었습니다.");
     } catch (e) { say("set-pw-msg", authErrorText(e), false); }
+  });
+
+  // 회원 탈퇴: 다시 인증 → 서버에서 데이터 삭제 → 인증 계정 삭제 → 로그아웃
+  $("btn-delete-account").addEventListener("click", async () => {
+    const msg = (text) => { const el = $("set-del-msg"); el.textContent = text; el.className = "auth-hint err"; };
+    msg("");
+    const isGoogle = STATE.me.provider === "google.com";
+    const pw = $("set-del-pw").value;
+    if (!isGoogle && !pw) return msg("본인 확인을 위해 현재 비밀번호를 입력해 주세요.");
+    if (!confirm(`정말 탈퇴하시겠습니까?\n\n- 계정(${STATE.me.displayName})이 삭제됩니다.\n- 지금까지 푼 모든 풀이가 삭제됩니다.\n- 다른 사용자의 목록과 검색에서도 사라집니다.\n\n이 작업은 되돌릴 수 없습니다.`)) return;
+
+    const btn = $("btn-delete-account");
+    btn.disabled = true;
+    try {
+      const { auth, mod } = await loadSdk();
+      const user = auth.currentUser;
+      if (isGoogle) await mod.reauthenticateWithPopup(user, new mod.GoogleAuthProvider());
+      else await mod.reauthenticateWithCredential(user, mod.EmailAuthProvider.credential(user.email, pw));
+
+      // 1) 서버: 프로필 · 이름/아이디 색인 · 풀이 삭제 (사용자 목록에서 즉시 제거됨)
+      const res = await apiFetch("/api/profile", { method: "DELETE" });
+      if (!res.ok) throw new Error(await errMessage(res, "서버에서 탈퇴 처리를 하지 못했습니다."));
+
+      // 2) 인증 계정 삭제 (실패해도 데이터는 이미 삭제됨)
+      let authNote = "";
+      try { await mod.deleteUser(user); } catch (e) { authNote = "\n(로그인 계정 삭제는 완료하지 못했습니다. 같은 계정으로 다시 로그인하면 새 계정으로 시작됩니다.)"; console.warn(e); }
+
+      // 3) 이 브라우저에 남은 개인 설정 정리 후 로그아웃
+      const uid = STATE.me.uid;
+      Object.keys(localStorage).filter(k => k.endsWith(`_${uid}`)).forEach(k => localStorage.removeItem(k));
+      try { await mod.signOut(auth); } catch (e) { /* 이미 로그아웃 */ }
+      alert("탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다." + authNote);
+      location.reload();
+    } catch (e) {
+      msg(authErrorText(e));
+    } finally { btn.disabled = false; }
   });
 
   // 임시 비밀번호 안내 배너

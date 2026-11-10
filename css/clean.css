@@ -172,3 +172,7 @@ button, select, input, textarea { font-family: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* 위험 동작(회원 탈퇴): 윤곽선 빨강, 누르면 채움 */
+.btn.btn-danger { background: #fff; color: var(--danger-color); border: 1px solid var(--danger-color); }
+.btn.btn-danger:hover { background: var(--danger-color); color: #fff; }

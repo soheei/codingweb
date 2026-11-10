@@ -1,6 +1,6 @@
-import { renderCompareView } from './compare.js';
+import { renderCompareView, saveCompareSelection } from './compare.js';
 import { API_BASE, STATE } from './config.js';
-import { loadCurrentMemberCode, renderSidebarQuestions, updateProgress } from './navigation.js';
+import { loadCurrentMemberCode, renderMemberTabs, renderSidebarQuestions, updateProgress } from './navigation.js';
 import { fetchSolutions, loadUsers, saveLocal } from './storage.js';
 import { showToast } from './ui.js';
 
@@ -22,7 +22,16 @@ export function setupServerPolling() {
       if (first) return; // 최초 로드는 loadInitialSolutions 가 이미 처리
 
       const hasDiff = await fetchSolutions();
-      loadUsers().then(renderSidebarQuestions).catch(() => {}); // 풀이 수/새 사용자 반영
+      // 풀이 수/새 사용자/탈퇴한 사용자 반영
+      loadUsers().then(({ pinsChanged, viewReset }) => {
+        if (pinsChanged) saveCompareSelection();
+        if (pinsChanged || viewReset) {
+          renderMemberTabs();
+          if (viewReset) { loadCurrentMemberCode(); updateProgress(); }
+          if (STATE.isDiffMode) renderCompareView();
+        }
+        renderSidebarQuestions();
+      }).catch(() => {});
 
       if (hasDiff) {
         saveLocal();

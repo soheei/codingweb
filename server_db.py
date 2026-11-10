@@ -98,7 +98,8 @@ def _service_account_token():
         _credentials = service_account.Credentials.from_service_account_info(
             key_info,
             scopes=["https://www.googleapis.com/auth/firebase.database",
-                    "https://www.googleapis.com/auth/userinfo.email"])
+                    "https://www.googleapis.com/auth/userinfo.email",
+                    "https://www.googleapis.com/auth/cloud-platform"])  # cloud-platform: Auth 계정 조회용
     if not _credentials.valid:
         _credentials.refresh(google.auth.transport.requests.Request())
     return _credentials.token
@@ -252,6 +253,76 @@ def _email_public(claims):
     return None if not email or email.endswith("@" + FAKE_EMAIL_DOMAIN) else email
 
 
+def _auth_email_for(uid, user):
+    """아이디로 로그인할 때 Firebase 에 넘길 이메일. 가능하면 Auth 에서 실시간 조회하고(이메일을 바꾼 직후에도 정확),
+    실패하면 DB 에 저장된 값, 그것도 없으면 아이디 방식의 내부용 이메일을 돌려준다."""
+    if FIREBASE_SERVICE_ACCOUNT_JSON and not (DEV_AUTH_BYPASS and not uid):
+        try:
+            url = f"https://identitytoolkit.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/accounts:lookup"
+            req = urllib.request.Request(
+                url, data=json.dumps({"localId": [uid]}).encode("utf-8"), method="POST",
+                headers={"Content-Type": "application/json", "Authorization": "Bearer " + _service_account_token()})
+            with urllib.request.urlopen(req, timeout=10) as res:
+                users = (json.loads(res.read().decode("utf-8") or "{}").get("users") or [])
+            if users and users[0].get("email"):
+                return users[0]["email"].lower()
+        except Exception as e:
+            print(f"[WARN] Auth 이메일 조회 실패, 저장된 값 사용: {e}")
+    return (user.get("authEmail") or f"{user.get('loginId')}@{FAKE_EMAIL_DOMAIN}").lower()
+
+
+def _web_api_key():
+    """Firebase 웹 API 키(공개값). 환경변수 FIREBASE_WEB_API_KEY, 없으면 공개 파일 js/config.js 에서 읽는다."""
+    key = os.environ.get("FIREBASE_WEB_API_KEY", "").strip()
+    if key:
+        return key
+    try:
+        with open(os.path.join(BASE_DIR, "js", "config.js"), "r", encoding="utf-8") as f:
+            m = re.search(r'apiKey:\s*"([^"]+)"', f.read())
+        return m.group(1) if m else ""
+    except OSError:
+        return ""
+
+
+def _identity_post(endpoint, body):
+    """Identity Toolkit REST 호출. 성공하면 dict, 실패하면 오류 코드 문자열을 담은 RuntimeError."""
+    url = f"https://identitytoolkit.googleapis.com/v1/{endpoint}?key=" + urllib.parse.quote(_web_api_key())
+    req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), method="POST",
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as res:
+            return json.loads(res.read().decode("utf-8") or "{}")
+    except urllib.error.HTTPError as e:
+        try:
+            msg = json.loads(e.read().decode("utf-8")).get("error", {}).get("message", "")
+        except ValueError:
+            msg = ""
+        raise RuntimeError(msg or f"HTTP {e.code}")
+
+
+def _make_custom_token(uid):
+    """서비스 계정 키로 서명한 Firebase 커스텀 토큰(브라우저가 signInWithCustomToken 으로 로그인)."""
+    from google.auth import crypt, jwt
+    key_info = json.loads(FIREBASE_SERVICE_ACCOUNT_JSON)
+    signer = crypt.RSASigner.from_service_account_info(key_info)
+    now = int(time.time())
+    payload = {"iss": key_info["client_email"], "sub": key_info["client_email"],
+               "aud": "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit",
+               "iat": now, "exp": now + 3600, "uid": uid}
+    return jwt.encode(signer, payload).decode("utf-8")
+
+
+_login_fails = {}  # (ip, 아이디) -> 실패 시각 목록 (무차별 대입 방지, 서버 재시작 시 초기화)
+LOGIN_MAX_FAILS, LOGIN_WINDOW = 8, 600
+
+
+def _throttled(key):
+    now = time.time()
+    fails = [t for t in _login_fails.get(key, []) if now - t < LOGIN_WINDOW]
+    _login_fails[key] = fails
+    return len(fails) >= LOGIN_MAX_FAILS
+
+
 def _profile_public(uid, user):
     return {"uid": uid, "displayName": user.get("displayName", ""), "loginId": user.get("loginId")}
 
@@ -276,7 +347,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
         self.wfile.write(body)
@@ -370,6 +441,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         user = db_get(f"users/{uid}")
         if not user:
             raise ApiError(404, "no_profile", "프로필이 없습니다. 표시 이름을 먼저 등록해 주세요")
+        auth_email = (claims.get("email") or "").lower()
+        if auth_email and user.get("authEmail") != auth_email:
+            db_update({f"users/{uid}/authEmail": auth_email})  # 이메일 변경 직후에도 아이디 로그인이 되도록 기록
         out = _profile_public(uid, user)
         out["email"] = _email_public(claims)
         out["tempPassword"] = bool(user.get("tempPassword"))
@@ -410,8 +484,96 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_PATCH(self):
         self._dispatch(self._patch)
 
+    def do_DELETE(self):
+        self._dispatch(self._delete)
+
+    def _delete(self):
+        path = urllib.parse.urlparse(self.path).path
+        if path == "/api/profile":
+            return self._delete_account()
+        self._send(404, b"not found", "text/plain")
+
+    def _delete_account(self):
+        """회원 탈퇴: 프로필·이름/아이디 색인·내 풀이를 모두 지운다 (되돌릴 수 없음).
+        사용자 목록(/api/users)은 users 노드에서 읽으므로 즉시 검색/목록에서 사라진다.
+        Firebase 인증 계정 자체는 브라우저가 이어서 삭제한다."""
+        global _version_counter
+        claims = self._claims()
+        uid = claims["uid"]  # 토큰의 uid 만 사용 → 자기 계정만 삭제할 수 있다
+        with _lock:
+            user = db_get(f"users/{uid}")
+            updates = {}
+            if user:
+                updates[f"users/{uid}"] = None
+                name = user.get("displayName")
+                if name and db_get(f"nameIndex/{name_key(name)}") == uid:
+                    updates[f"nameIndex/{name_key(name)}"] = None
+                login_id = user.get("loginId")
+                if login_id and db_get(f"loginIndex/{login_id}") == uid:
+                    updates[f"loginIndex/{login_id}"] = None
+            for qid in QUESTION_RANGE:
+                updates[f"solutions/{qid}/{uid}"] = None
+            db_update(updates)
+            _version_counter += 1  # 다른 사용자의 화면이 곧바로 갱신되도록 알린다
+        print(f"[ACCOUNT] deleted uid={uid}")
+        self._json(200, {"status": "deleted"})
+
+    def _client_ip(self):
+        fwd = self.headers.get("X-Forwarded-For", "")
+        return fwd.split(",")[0].strip() if fwd else self.client_address[0]
+
+    def _login(self):
+        """아이디 로그인: 서버가 비밀번호를 확인하고 커스텀 토큰을 준다. 이메일 주소는 브라우저에 알려 주지 않는다."""
+        data = self._body()
+        login_id = str(data.get("id", "")).strip().lower()
+        password = str(data.get("password", ""))
+        bad = ApiError(401, "bad_credentials", "아이디 또는 비밀번호가 올바르지 않습니다.")
+        if not FIREBASE_SERVICE_ACCOUNT_JSON or not _web_api_key():
+            raise ApiError(503, "login_unavailable", "서버에 로그인 설정(서비스 계정/웹 API 키)이 없습니다")
+        key = (self._client_ip(), login_id)
+        if _throttled(key):
+            raise ApiError(429, "too_many", "시도 횟수가 많아 잠시 막혔습니다. 10분 뒤 다시 시도해 주세요.")
+        uid = db_get(f"loginIndex/{login_id}") if LOGIN_ID_RE.match(login_id) and password else None
+        user = db_get(f"users/{uid}") if uid else None
+        if not user:
+            _login_fails.setdefault(key, []).append(time.time())
+            raise bad
+        try:
+            res = _identity_post("accounts:signInWithPassword",
+                                 {"email": _auth_email_for(uid, user), "password": password, "returnSecureToken": False})
+            if res.get("localId") != uid:
+                raise RuntimeError("uid mismatch")
+        except RuntimeError as e:
+            _login_fails.setdefault(key, []).append(time.time())
+            print(f"[LOGIN] failed id={login_id}: {e}")
+            raise bad
+        _login_fails.pop(key, None)
+        self._json(200, {"customToken": _make_custom_token(uid)})
+
+    def _password_reset(self):
+        """아이디로 비밀번호 재설정 메일 요청. 계정/이메일 유무와 상관없이 같은 응답을 준다."""
+        login_id = str(self._body().get("id", "")).strip().lower()
+        key = (self._client_ip(), "reset")
+        if _throttled(key):
+            raise ApiError(429, "too_many", "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.")
+        _login_fails.setdefault(key, []).append(time.time())
+        uid = db_get(f"loginIndex/{login_id}") if LOGIN_ID_RE.match(login_id) else None
+        user = db_get(f"users/{uid}") if uid else None
+        if user and _web_api_key():
+            email = _auth_email_for(uid, user)
+            if not email.endswith("@" + FAKE_EMAIL_DOMAIN):
+                try:
+                    _identity_post("accounts:sendOobCode", {"requestType": "PASSWORD_RESET", "email": email})
+                except RuntimeError as e:
+                    print(f"[RESET] failed id={login_id}: {e}")
+        self._json(200, {"status": "ok"})
+
     def _post(self):
         path = urllib.parse.urlparse(self.path).path
+        if path == "/api/login":
+            return self._login()
+        if path == "/api/password-reset":
+            return self._password_reset()
         if path == "/api/profile":
             return self._create_profile()
         if path == "/api/solution":  # PATCH 를 못 쓰는 환경 대비
@@ -442,7 +604,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if db_get(f"nameIndex/{name_key(name)}"):
                 raise ApiError(409, "name_taken", "이미 사용 중인 표시 이름입니다")
             updates = {
-                f"users/{uid}": {"displayName": name, "loginId": login_id, "createdAt": int(time.time())},
+                f"users/{uid}": {"displayName": name, "loginId": login_id, "createdAt": int(time.time()),
+                                  "authEmail": (claims.get("email") or "").lower() or None},
                 f"nameIndex/{name_key(name)}": uid,
             }
             if login_id:
@@ -477,6 +640,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         updates[f"nameIndex/{name_key(old)}"] = None
                     updates[f"nameIndex/{name_key(name)}"] = uid
                 updates[f"users/{uid}/displayName"] = name
+            if "loginId" in data:
+                if (claims.get("firebase") or {}).get("sign_in_provider") == "google.com":
+                    raise ApiError(400, "no_login_id", "Google 계정은 아이디를 설정할 수 없습니다")
+                new_id = str(data["loginId"]).strip().lower()
+                if not LOGIN_ID_RE.match(new_id):
+                    raise ApiError(400, "bad_login_id", "아이디는 영문 소문자/숫자/_ 4~20자여야 합니다")
+                old_id = user.get("loginId")
+                if new_id != old_id:
+                    owner = db_get(f"loginIndex/{new_id}")
+                    if owner and owner != uid:
+                        raise ApiError(409, "login_id_taken", "이미 사용 중인 아이디입니다")
+                    if old_id and db_get(f"loginIndex/{old_id}") == uid:
+                        updates[f"loginIndex/{old_id}"] = None
+                    updates[f"loginIndex/{new_id}"] = uid
+                    updates[f"users/{uid}/loginId"] = new_id
             if data.get("tempPasswordDone"):
                 updates[f"users/{uid}/tempPassword"] = None
             db_update(updates)

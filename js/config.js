@@ -37,7 +37,8 @@ export const MIN_COMPARE = 2; // 나 포함 최소 인원
 export const MAX_COMPARE = 5; // 나 포함 최대 인원
 
 export const STATE = {
-  questions: [],
+  questions: [],        // 지금은 1차 문제 100개 (2차 문제가 만들어지면 STATE.round 로 구분해 불러온다)
+  round: 1,             // 선택된 차수 (1 | 2)
   currentQuestionId: 1,
   me: null,            // { uid, displayName, loginId, tempPassword, provider }
   users: [],           // [{ uid, displayName, loginId, solvedCount }]

@@ -272,6 +272,12 @@ export function renderSidebarQuestions() {
 
   listEl.innerHTML = "";
 
+  // 2차 문제는 아직 없음 — 문제가 만들어지면 여기서 2차 목록을 쓰도록 바꾼다
+  if (STATE.round !== 1) {
+    listEl.innerHTML = '<div class="q-empty" style="padding: 24px 12px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">2차 문제는 준비 중입니다.</div>';
+    return;
+  }
+
   const filtered = STATE.questions.filter(q => {
     const matchSearch = String(q.id).includes(searchQuery) || q.title.toLowerCase().includes(searchQuery) || q.category.toLowerCase().includes(searchQuery);
     const matchDiff = filterDiff === "all" || q.difficulty === filterDiff;
@@ -326,6 +332,13 @@ export function isSolvedByCurrentMember(qId) {
 }
 
 export function updateProgress() {
+  if (STATE.round !== 1) { // 2차는 아직 문제가 없다
+    document.getElementById("progress-label").textContent = `${nameOf(STATE.currentMember)} 완료율:`;
+    document.getElementById("progress-percent").textContent = "0%";
+    document.getElementById("progress-count").textContent = "0 / 0 완료";
+    document.getElementById("progress-fill").style.width = "0%";
+    return;
+  }
   let solvedCount = 0;
   STATE.questions.forEach(q => {
     if (isSolvedByCurrentMember(q.id)) solvedCount++;

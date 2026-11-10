@@ -202,3 +202,14 @@ body.row-resizing, body.row-resizing * { cursor: row-resize !important; user-sel
 .cmp-section { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); padding: 8px 6px 4px; }
 .owner-dd-item { align-items: center; }
 .owner-dd-label { flex: 1 1 auto; min-width: 0; }
+
+/* ---------- 회원 탈퇴 ---------- */
+.danger-zone { border: 1px solid #f2cfcb; background: #fdf8f7; border-radius: var(--radius-sm); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.danger-title { font-size: 0.85rem; font-weight: 700; color: var(--danger-color); }
+.btn-danger { background: #fff; color: var(--danger-color); border: 1px solid var(--danger-color); }
+.btn-danger:hover { background: var(--danger-color); color: #fff; }
+
+/* 내용이 길어지면 모달 안에서 스크롤 (작은 화면에서 잘리지 않게) */
+.modal-card { max-height: 92vh; display: flex; flex-direction: column; max-width: calc(100vw - 24px); }
+.modal-body { overflow-y: auto; min-height: 0; }
+.modal-header, .modal-footer { flex: 0 0 auto; }

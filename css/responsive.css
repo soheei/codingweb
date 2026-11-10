@@ -276,11 +276,12 @@
     gap: 4px 6px;
     padding: 4px 8px;
   }
-  .search-box { flex: 1 1 160px; padding: 2px 8px; gap: 6px; }
+  .search-row { flex: 1 1 200px; gap: 4px; }
+  .search-box { flex: 1 1 0; padding: 2px 8px; gap: 6px; }
   .search-box i { font-size: 0.72rem; }
   .search-box input { font-size: 0.72rem; }
   .filter-row { flex: 1 1 200px; gap: 4px; }
-  .dropdown { padding: 2px 4px; font-size: 0.7rem; }
+  .dropdown { padding: 2px 2px 2px 4px; font-size: 0.7rem; }
   .progress-bar-container { flex: 1 1 100%; margin: 0; }
   .progress-labels { font-size: 0.64rem; margin-bottom: 1px; }
   .progress-track { height: 3px; }

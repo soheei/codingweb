@@ -55,12 +55,24 @@
   gap: 6px;
 }
 
+.search-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+.search-row .search-box { flex: 1 1 0; min-width: 0; }
+/* 차수 선택: 아래 .dropdown(flex: 1 1 0)보다 우선하도록 .search-row 를 붙여 구체성을 높이고 폭을 고정한다.
+   폭을 더 줄이려면 아래 두 곳의 64px 만 바꾸면 된다 (글자 "1차"와 화살표가 보이는 최소치는 약 56px). */
+.search-row .round-select { flex: 0 0 64px; width: 64px; padding: 6px 2px 6px 8px; }
+
 .dropdown {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;            /* 좁은 사이드바에서 글자가 잘리지 않고 같이 줄어들도록 */
+  text-overflow: ellipsis;
   background: #ffffff;
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 6px 8px;
+  padding: 6px 2px 6px 6px;
   border-radius: var(--radius-sm);
   font-size: 0.78rem;
   outline: none;

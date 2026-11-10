@@ -38,12 +38,22 @@ export async function fetchSolutions(uids = neededUids()) {
   return changed;
 }
 
+// 사용자 목록을 새로 받고, 탈퇴해서 사라진 사람은 내 추가 목록/보고 있던 화면에서 정리한다.
+// 반환: { pinsChanged, viewReset } — 호출한 쪽이 필요하면 화면을 다시 그린다.
 export async function loadUsers() {
   const res = await apiFetch("/api/users");
   if (!res.ok) throw new Error(`users failed: ${res.status}`);
   STATE.users = (await res.json()).users;
   const mine = STATE.users.find(u => u.uid === STATE.me.uid);
   if (mine) STATE.me.displayName = mine.displayName;
+
+  const exists = new Set(STATE.users.map(u => u.uid));
+  const before = STATE.compareUids.length;
+  STATE.compareUids = STATE.compareUids.filter(uid => exists.has(uid));
+  STATE.favorites = STATE.favorites.filter(uid => exists.has(uid));
+  const viewReset = STATE.currentMember !== STATE.me.uid && !exists.has(STATE.currentMember);
+  if (viewReset) STATE.currentMember = STATE.me.uid;
+  return { pinsChanged: STATE.compareUids.length !== before, viewReset };
 }
 
 export async function loadInitialSolutions() {
