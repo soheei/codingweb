@@ -9,43 +9,44 @@ import { showToast } from './ui.js';
    - 내가 보고 있는 사람 / 비교 대상의 새 풀이만 받아온다.
    ========================================================================== */
 export function setupServerPolling() {
-  let lastVersion = null;
+  let busy = false;
+
+  const refreshUsers = () => loadUsers().then(({ pinsChanged, viewReset }) => {
+    if (pinsChanged) saveCompareSelection();
+    if (pinsChanged || viewReset) {
+      renderMemberTabs();
+      if (viewReset) { loadCurrentMemberCode(); updateProgress(); }
+      if (STATE.isDiffMode) renderCompareView();
+    }
+    renderSidebarQuestions();
+  });
 
   const tick = async () => {
+    if (busy) return; // 이전 확인이 아직 끝나지 않았으면 겹치지 않게 건너뜀
+    busy = true;
     try {
       const vRes = await fetch(`${API_BASE}/api/version`, { cache: "no-store" });
       if (!vRes.ok) return;
-      const { version } = await vRes.json();
-      if (version === lastVersion) return;
-      const first = lastVersion === null;
-      lastVersion = version;
-      if (first) return; // 최초 로드는 loadInitialSolutions 가 이미 처리
+      const { version, usersRev } = await vRes.json();
 
-      const hasDiff = await fetchSolutions();
-      // 풀이 수/새 사용자/탈퇴한 사용자 반영
-      loadUsers().then(({ pinsChanged, viewReset }) => {
-        if (pinsChanged) saveCompareSelection();
-        if (pinsChanged || viewReset) {
-          renderMemberTabs();
-          if (viewReset) { loadCurrentMemberCode(); updateProgress(); }
+      // 서버 버전이 달라졌을 때만 가져온다. 마지막 버전 이후 바뀐 칸만 받으므로 가볍다.
+      if (version !== STATE.syncVersion) {
+        const hasDiff = await fetchSolutions();
+        if (hasDiff) {
+          saveLocal();
           if (STATE.isDiffMode) renderCompareView();
+          else loadCurrentMemberCode();
+          renderSidebarQuestions();
+          updateProgress();
+          showToast("[실시간 동기화] 최신 풀이가 반영되었습니다!");
         }
-        renderSidebarQuestions();
-      }).catch(() => {});
-
-      if (hasDiff) {
-        saveLocal();
-        if (STATE.isDiffMode) {
-          renderCompareView();
-        } else {
-          loadCurrentMemberCode();
-        }
-        renderSidebarQuestions();
-        updateProgress();
-        showToast("[실시간 동기화] 최신 풀이가 반영되었습니다!");
       }
+      // 사용자 목록(새 사용자/이름 변경/탈퇴/푼 문제 수)은 바뀌었을 때만 다시 받는다
+      if (usersRev !== STATE.usersRev) await refreshUsers();
     } catch (err) {
       // 서버 일시 오프라인 - 다음 주기에 재시도
+    } finally {
+      busy = false;
     }
   };
 

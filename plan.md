@@ -396,3 +396,11 @@ codingmasters_solutions/…  = (기존 데이터, 이름 키) # 마이그레이�
   - 현재 1~100번 = **1차 코딩마스터스**. 2차를 누르면 "2차 문제는 준비 중입니다." / 완료율 `0 / 0`. 선택값은 `STATE.round`(`js/config.js`).
   - **2차 문제 생성 시 해야 할 일**: ① `renderSidebarQuestions`/`updateProgress`(`js/navigation.js`)의 `STATE.round !== 1` 분기에서 2차 문제 목록(1~100번)을 불러오도록 교체 ② **풀이 저장 경로에 차수 포함**(현재 `solutions/{문제번호}/{uid}` 는 차수 구분이 없어 2차 1번이 1차 1번 칸을 덮어씀 → 예: `solutions/r{차수}/{번호}/{uid}` 또는 `solutions2/...`, 기존 1차 데이터 마이그레이션/호환 필요) ③ 문제 데이터(`questions`)·샘플 입력·`/api/sync`·`/api/solution`·비교/사용자 목록의 완료 수(`solvedCount`)를 차수별로 계산 ④ 선택 차수를 새로고침 후에도 유지할지 결정.
 - **남은 확인(원래 문제)**: 민희/호준/승우 로그인 불가 — `python tools/create_legacy_users.py --key-file 다운로드한키.json --check minhee,sohee,hojun,seungwoo` 결과 대기. 계정 없으면 `--dry-run` 없이 실행, 비밀번호 모르면 `--reset-password`. (비밀번호는 스크립트가 무작위로 만든 임시 비밀번호이며 사용자가 정하는 값이 아님)
+
+### 추가 반영 (2026-11-10, 5차) — 접속 인원 늘어도 버티도록 동기화 방식 개선
+- **서버 메모리 캐시**: 풀이 전체/사용자 목록을 메모리에 두고 읽기(`/api/sync`, `/api/users`)는 Firebase 를 거치지 않음. 저장·가입·이름변경·탈퇴 때 캐시도 같이 갱신. `CACHE_REFRESH_SECS`(기본 60초)마다 백그라운드로 Firebase 와 대조해, 콘솔/스크립트로 직접 바꾼 DB 도 `/api/version` 폴링만으로 퍼짐. 서버가 1대일 때를 전제로 함(여러 대로 늘리면 캐시 방식 재검토 필요).
+- **푼 문제 수**: DB 에 저장하지 않고 메모리에서 저장 때마다 증감(캐시 최초 로드 때 기존 데이터로 한 번 계산).
+- **증분 동기화**: `/api/sync?users=..&since=버전` → 그 이후 바뀐 칸만(`mode: delta`). 서버 재시작/접두사 불일치/로그 범위 초과/새 사람 추가 시 자동으로 전체(`mode: full`). 삭제는 코드 `null` 로 전달. `/api/version` 은 `usersRev` 도 돌려주고, 사용자 목록은 이 값이 바뀔 때만 다시 받음.
+- **접속 몰림 대비**: 서버 listen backlog 5 → 128 (30명이 동시에 접속하면 1초 지연되던 문제 해결).
+- 점검용: 환경변수 `DEBUG_STATS=1` 일 때만 `/api/stats`(DB 읽기/쓰기 횟수) 열림. 배포에서는 켜지 않는다.
+- 로컬 측정(파일 DB 모드, 동시 30명, 저장 6회): Firebase 읽기 2회, 응답 중앙값 14ms / p95 23ms. (이전 방식은 저장 1회마다 접속자 전원이 풀이 전체를 2번씩 읽었음)

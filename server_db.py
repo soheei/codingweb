@@ -1,3 +1,4 @@
+import collections
 import http.server
 import json
 import os
@@ -154,6 +155,7 @@ def _as_dict(raw):
 
 
 def db_get(path):
+    _stats["db_reads"] += 1
     if FIREBASE_DB_URL:
         return _firebase_request("GET", _firebase_url(path))
     node = _local_load()
@@ -168,6 +170,7 @@ def db_update(updates):
     """멀티패스 업데이트: {"users/uid/displayName": "이름", "nameIndex/이전": None(삭제)} 를 한 번에 반영."""
     if not updates:
         return
+    _stats["db_writes"] += 1
     if FIREBASE_DB_URL:
         _firebase_request("PATCH", _firebase_url(""), updates)
         return
@@ -193,21 +196,197 @@ def _is_template(code):
     return norm(code) == norm(DEFAULT_CODE)
 
 
-def load_solutions(uids=None):
-    """{문제번호: {uid: 코드}}. uids 를 주면 해당 사용자 칸만 돌려준다."""
-    raw = _as_dict(db_get("solutions"))
-    out = {}
-    for qid, cells in raw.items():
-        cells = _as_dict(cells)
-        if uids is not None:
-            cells = {u: c for u, c in cells.items() if u in uids}
-        if cells:
-            out[str(qid)] = cells
-    return out
-
-
 def name_key(display_name):
     return display_name.strip().lower()
+
+
+# ---------------------------------------------------------------- cache (서버 메모리)
+# 풀이 전체와 사용자 목록을 메모리에 두고 읽기 요청은 Firebase 를 거치지 않는다.
+# - 모든 쓰기는 이 서버를 거치므로, 쓰기 성공 직후 캐시도 같이 고친다.
+# - 콘솔/스크립트로 DB 를 직접 고친 경우를 위해 CACHE_REFRESH_SECS 마다 Firebase 와 대조해 차이를 반영한다.
+# - 바뀐 칸은 변경 로그(_log)에 남겨, 클라이언트가 마지막으로 받은 버전 이후의 변경분만 받아 가게 한다.
+CACHE_REFRESH_SECS = float(os.environ.get("CACHE_REFRESH_SECS", "60"))
+LOG_MAX = 5000
+_cache_lock = threading.RLock()   # 메모리 연산만 짧게 잡는 락 (네트워크 호출 중에는 잡지 않는다)
+_reload_lock = threading.Lock()
+_cache = {"loaded": False, "loaded_at": 0.0, "solutions": {}, "users": {}, "counts": {}}
+_log = collections.deque()        # (버전 번호, 문제번호, uid, 코드 또는 None=삭제)
+_log_floor = 0                    # 로그에서 밀려난 마지막 버전 번호 (이보다 오래된 since 는 전체 동기화)
+_users_rev = 0                    # 사용자 목록(이름/가입/탈퇴/푼 문제 수)이 바뀔 때마다 증가
+_stats = {"db_reads": 0, "db_writes": 0, "cache_reloads": 0}
+
+
+def _clean_user(user):
+    return {k: v for k, v in user.items() if v is not None}
+
+
+def _count_solved(cells_by_q):
+    counts = {}
+    for cells in cells_by_q.values():
+        for uid, code in cells.items():
+            if isinstance(code, str) and not _is_template(code):
+                counts[uid] = counts.get(uid, 0) + 1
+    return counts
+
+
+def _bump(cells=(), users=False):
+    """_cache_lock 을 잡은 상태에서 호출. 버전을 올리고 바뀐 칸을 변경 로그에 남긴다."""
+    global _version_counter, _log_floor, _users_rev
+    _version_counter += 1
+    for qid, uid, code in cells:
+        _log.append((_version_counter, str(qid), uid, code))
+    while len(_log) > LOG_MAX:
+        _log_floor = _log.popleft()[0]
+    if users:
+        _users_rev += 1
+
+
+def _cache_reload_locked():
+    """Firebase 에서 풀이/사용자를 읽어 캐시를 채운다. 이미 캐시가 있으면 차이만 변경 로그에 남긴다."""
+    with _cache_lock:
+        start_seq = _version_counter
+    solutions = {}
+    for qid, cells in _as_dict(db_get("solutions")).items():
+        cells = _as_dict(cells)
+        solutions[str(qid)] = {u: c for u, c in cells.items() if isinstance(c, str)}
+    users = {uid: _clean_user(u) for uid, u in _as_dict(db_get("users")).items() if isinstance(u, dict)}
+    with _cache_lock:
+        if _cache["loaded"] and _version_counter != start_seq:
+            # 읽는 사이에 저장/가입이 있었다 → 낡은 결과일 수 있으니 버리고 곧 다시 시도
+            _cache["loaded_at"] = time.time() - CACHE_REFRESH_SECS + 3
+            return
+        diff_cells, users_changed = [], False
+        if _cache["loaded"]:
+            old = _cache["solutions"]
+            for qid, cells in solutions.items():
+                for uid, code in cells.items():
+                    if old.get(qid, {}).get(uid) != code:
+                        diff_cells.append((qid, uid, code))
+            for qid, cells in old.items():
+                for uid in cells:
+                    if uid not in solutions.get(qid, {}):
+                        diff_cells.append((qid, uid, None))
+            users_changed = users != _cache["users"]
+        was_loaded = _cache["loaded"]
+        _cache["solutions"], _cache["users"] = solutions, users
+        _cache["counts"] = _count_solved(solutions)
+        _cache["loaded"], _cache["loaded_at"] = True, time.time()
+        _stats["cache_reloads"] += 1
+        if was_loaded and (diff_cells or users_changed):
+            _bump(cells=diff_cells, users=users_changed or bool(diff_cells))
+            print(f"[CACHE] DB 직접 변경 감지: 풀이 {len(diff_cells)}칸, 사용자 목록 {'변경' if users_changed else '동일'}")
+
+
+def _cache_ensure():
+    with _cache_lock:
+        loaded = _cache["loaded"]
+        stale = time.time() - _cache["loaded_at"] >= CACHE_REFRESH_SECS
+    if loaded and not stale:
+        return
+    if not loaded:
+        with _reload_lock:  # 처음 한 번: 동시에 들어온 요청은 모두 기다렸다가 같은 결과를 쓴다
+            with _cache_lock:
+                if _cache["loaded"]:
+                    return
+            _cache_reload_locked()
+        return
+    if _reload_lock.acquire(blocking=False):
+        # 주기적 재확인은 백그라운드에서: 요청은 기다리지 않고 기존 캐시를 그대로 쓴다 (한 번에 하나만 실행)
+        def run():
+            try:
+                _cache_reload_locked()
+            except Exception as e:
+                print(f"[WARN] 캐시 재확인 실패(기존 캐시 유지, 10초 뒤 재시도): {e}")
+                with _cache_lock:
+                    _cache["loaded_at"] = time.time() - CACHE_REFRESH_SECS + 10
+            finally:
+                _reload_lock.release()
+        threading.Thread(target=run, daemon=True).start()
+
+
+def cached_user(uid):
+    _cache_ensure()
+    with _cache_lock:
+        user = _cache["users"].get(uid)
+    if user is None:
+        fresh = db_get(f"users/{uid}")  # 캐시가 낡아 있을 수 있으니(스크립트로 막 만든 계정 등) DB 에서 확인
+        if isinstance(fresh, dict):
+            _cache_put_user(uid, fresh)
+            return _clean_user(fresh)
+    return user
+
+
+def cached_cell(qid, uid):
+    _cache_ensure()
+    with _cache_lock:
+        return _cache["solutions"].get(str(qid), {}).get(uid)
+
+
+def _cache_put_user(uid, user, bump=True):
+    with _cache_lock:
+        _cache["users"][uid] = _clean_user(user)
+        if bump:
+            _bump(users=True)
+
+
+def _cache_set_cell(qid, uid, code):
+    with _cache_lock:
+        cells = _cache["solutions"].setdefault(str(qid), {})
+        old = cells.get(uid)
+        if code is None:
+            cells.pop(uid, None)
+        else:
+            cells[uid] = code
+        was = isinstance(old, str) and not _is_template(old)
+        now = isinstance(code, str) and not _is_template(code)
+        delta = (1 if now else 0) - (1 if was else 0)
+        if delta:
+            _cache["counts"][uid] = max(0, _cache["counts"].get(uid, 0) + delta)
+        _bump(cells=[(qid, uid, code)], users=bool(delta))
+
+
+def _cache_remove_user(uid):
+    with _cache_lock:
+        gone = []
+        for qid, cells in _cache["solutions"].items():
+            if uid in cells:
+                cells.pop(uid)
+                gone.append((qid, uid, None))
+        _cache["users"].pop(uid, None)
+        _cache["counts"].pop(uid, None)
+        _bump(cells=gone, users=True)
+
+
+def cache_users_view():
+    _cache_ensure()
+    with _cache_lock:
+        out = []
+        for uid, user in _cache["users"].items():
+            item = _profile_public(uid, user)
+            item["solvedCount"] = _cache["counts"].get(uid, 0)
+            out.append(item)
+        rev = _users_rev
+    out.sort(key=lambda u: u["displayName"])
+    return out, rev
+
+
+def cache_sync(uids, since):
+    """since("접두사-번호")가 유효하면 그 이후 바뀐 칸만(delta), 아니면 요청한 사용자들의 전체(full)."""
+    _cache_ensure()
+    with _cache_lock:
+        version = f"{_version_prefix}-{_version_counter}"
+        base = {"version": version, "usersRev": _users_rev}
+        m = re.match(r"^(\d+)-(\d+)$", since or "")
+        if m and m.group(1) == _version_prefix and int(m.group(2)) >= _log_floor and int(m.group(2)) <= _version_counter:
+            n = int(m.group(2))
+            cells = [[q, u, c] for (seq, q, u, c) in _log if seq > n and u in uids]
+            return {"mode": "delta", "cells": cells, **base}
+        solutions = {}
+        for qid, cells in _cache["solutions"].items():
+            picked = {u: c for u, c in cells.items() if u in uids}
+            if picked:
+                solutions[qid] = picked
+        return {"mode": "full", "solutions": solutions, **base}
 
 
 # ---------------------------------------------------------------- auth
@@ -405,7 +584,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         path, query = parsed.path, urllib.parse.parse_qs(parsed.query)
 
         if path == "/api/version":
-            return self._json(200, {"version": f"{_version_prefix}-{_version_counter}"})
+            try:
+                _cache_ensure()  # 주기가 지났으면 한 요청만 Firebase 와 대조 → 콘솔/스크립트로 직접 바꾼 DB 도 곧 퍼진다
+            except Exception as e:
+                print(f"[WARN] 캐시 확인 실패: {e}")
+            with _cache_lock:
+                return self._json(200, {"version": f"{_version_prefix}-{_version_counter}", "usersRev": _users_rev})
         if path == "/healthz":
             return self._send(200, b"ok", "text/plain")
         if path == "/api/check":
@@ -416,6 +600,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self._users()
         if path == "/api/sync":
             return self._sync(query)
+        if path == "/api/stats" and os.environ.get("DEBUG_STATS") == "1":  # 부하/캐시 점검용 (기본 꺼짐)
+            with _cache_lock:
+                return self._json(200, {**_stats, "log": len(_log), "users": len(_cache["users"]),
+                                        "version": _version_counter, "usersRev": _users_rev})
         if path in STATIC_FILES or self._is_static_asset(path):
             name = STATIC_FILES.get(path) or path.lstrip("/")
             with open(os.path.join(BASE_DIR, name), "rb") as f:
@@ -444,6 +632,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         auth_email = (claims.get("email") or "").lower()
         if auth_email and user.get("authEmail") != auth_email:
             db_update({f"users/{uid}/authEmail": auth_email})  # 이메일 변경 직후에도 아이디 로그인이 되도록 기록
+            _cache_put_user(uid, {**user, "authEmail": auth_email}, bump=False)
         out = _profile_public(uid, user)
         out["email"] = _email_public(claims)
         out["tempPassword"] = bool(user.get("tempPassword"))
@@ -452,21 +641,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def _users(self):
         self._claims()
-        users = _as_dict(db_get("users"))
-        counts = {}
-        for cells in load_solutions().values():
-            for uid, code in cells.items():
-                if isinstance(code, str) and not _is_template(code):
-                    counts[uid] = counts.get(uid, 0) + 1
-        result = []
-        for uid, user in users.items():
-            if not isinstance(user, dict):
-                continue
-            item = _profile_public(uid, user)
-            item["solvedCount"] = counts.get(uid, 0)
-            result.append(item)
-        result.sort(key=lambda u: u["displayName"])
-        self._json(200, {"users": result})
+        users, rev = cache_users_view()  # 메모리에서 바로 (Firebase 를 읽지 않는다)
+        self._json(200, {"users": users, "usersRev": rev})
 
     def _sync(self, query):
         claims = self._claims()
@@ -475,7 +651,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             uids.update(u for u in chunk.split(",") if re.match(r"^[A-Za-z0-9_\-]{1,40}$", u))
         if len(uids) > 6:  # 나 + 최대 5명
             raise ApiError(400, "too_many_users", "한 번에 조회할 수 있는 사용자 수를 초과했습니다")
-        self._json(200, load_solutions(uids))
+        since = (query.get("since", [""])[0] or "").strip()
+        self._json(200, cache_sync(uids, since))
 
     # ----- POST / PATCH
     def do_POST(self):
@@ -514,7 +691,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             for qid in QUESTION_RANGE:
                 updates[f"solutions/{qid}/{uid}"] = None
             db_update(updates)
-            _version_counter += 1  # 다른 사용자의 화면이 곧바로 갱신되도록 알린다
+            _cache_remove_user(uid)  # 캐시에서도 지우고 버전을 올려 다른 사용자의 화면이 곧바로 갱신되게 한다
         print(f"[ACCOUNT] deleted uid={uid}")
         self._json(200, {"status": "deleted"})
 
@@ -618,6 +795,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     raise ApiError(409, "login_id_taken", "이미 사용 중인 아이디입니다")
                 updates[f"loginIndex/{login_id}"] = uid
             db_update(updates)
+            _cache_put_user(uid, updates[f"users/{uid}"])
         print(f"[PROFILE] created uid={uid} name={name}")
         out = _profile_public(uid, {"displayName": name, "loginId": login_id})
         out["email"] = _email_public(claims)
@@ -664,10 +842,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 updates[f"users/{uid}/tempPassword"] = None
             db_update(updates)
             user = db_get(f"users/{uid}") or user
+            _cache_put_user(uid, user)
         self._json(200, _profile_public(uid, user))
 
     def _save_solution(self):
-        global _version_counter
         claims = self._claims()
         uid = claims["uid"]  # 클라이언트가 보낸 uid/이름은 쓰지 않는다 → 내 칸에만 저장
         data = self._body()
@@ -677,16 +855,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not isinstance(code, str) or len(code) > MAX_CODE_LEN:
             raise ApiError(400, "bad_code", "코드가 올바르지 않거나 너무 깁니다")
         with _lock:
-            if not db_get(f"users/{uid}"):
+            if not cached_user(uid):
                 raise ApiError(403, "no_profile", "프로필을 먼저 등록해 주세요")
-            old = db_get(f"solutions/{qid}/{uid}")
+            old = cached_cell(qid, uid)
             if code == old:
                 return self._json(200, {"status": "success", "changed": 0})
             # 기본 템플릿이 이미 저장된 실제 풀이를 덮어쓰지 않도록 방지 (초기화 버튼은 reset=true)
             if old and _is_template(code) and not data.get("reset"):
                 return self._json(200, {"status": "success", "changed": 0})
             db_update({f"solutions/{qid}/{uid}": code})
-            _version_counter += 1
+            _cache_set_cell(qid, uid, code)  # 쓰기 성공 후 캐시/변경 로그/버전 갱신
         print(f"[SAVE OK] uid={uid} q={qid}")
         self._json(200, {"status": "success", "changed": 1})
 
@@ -694,6 +872,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 class ThreadedServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
+    request_queue_size = 128  # 기본값 5 는 접속이 한꺼번에 몰리면 넘쳐서 1초씩 지연된다
 
 
 def startup_check():
@@ -728,6 +907,12 @@ if __name__ == "__main__":
           + (" DEV_AUTH_BYPASS=ON" if DEV_AUTH_BYPASS else ""))
     sys.stdout.flush()
     startup_check()
+    try:
+        _cache_ensure()
+        print(f"[캐시] 사용자 {len(_cache['users'])}명, 풀이 {sum(len(c) for c in _cache['solutions'].values())}칸을 메모리에 불러왔습니다 "
+              f"(Firebase 와 {int(CACHE_REFRESH_SECS)}초마다 대조)")
+    except Exception as e:
+        print(f"[캐시][실패] 첫 로드 실패(요청이 올 때 다시 시도합니다): {e}")
     sys.stdout.flush()
     try:
         ThreadedServer(("0.0.0.0", PORT), Handler).serve_forever()

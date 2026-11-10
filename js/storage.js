@@ -19,22 +19,36 @@ export function neededUids(extra = []) {
 }
 
 // 서버에서 풀이를 받아 STATE.solutions 에 합친다.
-// 내가 지금 편집 중인 칸(저장 전 변경)은 덮어쓰지 않는다. 반환값: 바뀐 칸이 있는지.
+// - 이미 받아 둔 사용자들만 필요하면 "마지막 버전 이후 바뀐 칸"만 받는다(증분). 처음이거나 새 사람이 늘었거나
+//   서버가 다시 시작됐으면 서버가 알아서 전체를 내려준다.
+// - 내가 지금 편집 중인 칸(저장 전 변경)은 덮어쓰지 않는다. 반환값: 바뀐 칸이 있는지.
 export async function fetchSolutions(uids = neededUids()) {
-  const res = await apiFetch(`/api/sync?users=${encodeURIComponent(uids.join(","))}`);
+  const synced = new Set(STATE.syncedUids);
+  const needFull = !STATE.syncVersion || uids.some(u => !synced.has(u));
+  let url = `/api/sync?users=${encodeURIComponent(uids.join(","))}`;
+  if (!needFull) url += `&since=${encodeURIComponent(STATE.syncVersion)}`;
+  const res = await apiFetch(url);
   if (!res.ok) throw new Error(`sync failed: ${res.status}`);
-  const serverData = await res.json();
+  const body = await res.json();
+
+  const cells = body.mode === "delta"
+    ? body.cells
+    : Object.entries(body.solutions || {}).flatMap(([qId, byUid]) => Object.entries(byUid).map(([uid, code]) => [qId, uid, code]));
+
   let changed = false;
-  Object.keys(serverData).forEach(qId => {
+  for (const [qId, uid, code] of cells) {
     if (!STATE.solutions[qId]) STATE.solutions[qId] = {};
-    Object.entries(serverData[qId]).forEach(([uid, code]) => {
-      const isEditingNow = (Number(qId) === STATE.currentQuestionId && isMe(uid) && STATE.hasUnsavedChanges);
-      if (!isEditingNow && typeof code === "string" && STATE.solutions[qId][uid] !== code) {
-        STATE.solutions[qId][uid] = code;
-        changed = true;
-      }
-    });
-  });
+    const isEditingNow = (Number(qId) === STATE.currentQuestionId && isMe(uid) && STATE.hasUnsavedChanges);
+    if (isEditingNow) continue;
+    if (code === null) { // 상대가 풀이를 지움(탈퇴 등)
+      if (uid in STATE.solutions[qId]) { delete STATE.solutions[qId][uid]; changed = true; }
+    } else if (typeof code === "string" && STATE.solutions[qId][uid] !== code) {
+      STATE.solutions[qId][uid] = code;
+      changed = true;
+    }
+  }
+  STATE.syncVersion = body.version;
+  STATE.syncedUids = [...uids];
   return changed;
 }
 
@@ -43,7 +57,9 @@ export async function fetchSolutions(uids = neededUids()) {
 export async function loadUsers() {
   const res = await apiFetch("/api/users");
   if (!res.ok) throw new Error(`users failed: ${res.status}`);
-  STATE.users = (await res.json()).users;
+  const body = await res.json();
+  STATE.users = body.users;
+  STATE.usersRev = body.usersRev;
   const mine = STATE.users.find(u => u.uid === STATE.me.uid);
   if (mine) STATE.me.displayName = mine.displayName;
 

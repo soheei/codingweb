@@ -44,6 +44,9 @@ export const STATE = {
   users: [],           // [{ uid, displayName, loginId, solvedCount }]
   currentMember: null, // 지금 에디터에서 보고 있는 사람의 uid (내 uid 이면 편집 가능, 아니면 읽기 전용)
   compareUids: [],     // 비교 대상(나 제외) uid 목록
+  syncVersion: null,   // 마지막으로 반영한 서버 버전 (이후 바뀐 칸만 받아 오는 데 사용)
+  syncedUids: [],      // 위 버전까지 변경분을 계속 받고 있는 사용자 uid 들
+  usersRev: null,      // 마지막으로 반영한 사용자 목록 버전
   favorites: [],       // 즐겨찾기(별표)한 사람 uid 목록 (선택 목록에서 맨 위에 표시)
   solutions: {},       // { [qId]: { [uid]: code } }
   isDiffMode: false,
