@@ -98,6 +98,7 @@ def main():
     ap.add_argument("--db-url", default=DEFAULT_DB_URL)
     ap.add_argument("--map", default=DEFAULT_MAP, help="이름=아이디 쌍 (쉼표 구분)")
     ap.add_argument("--dry-run", action="store_true", help="아무것도 쓰지 않고 할 일만 출력")
+    ap.add_argument("--only", help="이 아이디들만 처리(쉼표 구분). 예: minhee,seungwoo,hojun")
     ap.add_argument("--check", help="로그인 문제 점검: 아이디(쉼표 구분)의 Auth 계정/DB 프로필 상태만 출력")
     ap.add_argument("--reset-password", help="아이디(쉼표 구분)의 임시 비밀번호를 새로 만들어 적용")
     args = ap.parse_args()
@@ -114,6 +115,11 @@ def main():
     db = args.db_url.rstrip("/")
     pid = g.project_id
     mapping = parse_map(args.map)
+    if args.only:  # 예: --only minhee,seungwoo,hojun → 해당 아이디만 처리(나머지는 건드리지 않음)
+        wanted = {x.strip().lower() for x in args.only.split(",") if x.strip()}
+        mapping = {n: i for n, i in mapping.items() if i in wanted}
+        if not mapping:
+            sys.exit("--only 에 해당하는 아이디가 --map 에 없습니다")
 
     def db_get(path):
         path = urllib.parse.quote(path, safe="/")  # 한글 이름이 경로에 들어가므로 URL 인코딩
@@ -175,8 +181,30 @@ def main():
         name_owner = db_get(f"nameIndex/{name.lower()}")
         print(f"\n[{name}] 아이디={login_id} / 복사할 풀이 {len(cells)}개")
         if existing_uid or name_owner:
-            print(f"  - 이미 등록됨(uid={existing_uid or name_owner}) → 건너뜁니다")
-            results.append((name, login_id, None, "이미 있음"))
+            old_uid = existing_uid or name_owner
+            # 콘솔에서 로그인 계정(Auth)만 지우면 DB 프로필/풀이는 남는다 → 같은 uid 로 계정을 다시 만들어 풀이를 그대로 연결
+            auth_by_uid = g.call("POST", f"https://identitytoolkit.googleapis.com/v1/projects/{pid}/accounts:lookup",
+                                 {"localId": [old_uid]})
+            if (auth_by_uid or {}).get("users"):
+                print(f"  - 이미 등록됨(uid={old_uid}, 로그인 계정 있음) → 건너뜁니다")
+                results.append((name, login_id, None, "이미 있음"))
+                continue
+            if lookup_auth(email):
+                print(f"  - [주의] {email} 로그인 계정이 다른 uid 로 이미 있어 건너뜁니다. 콘솔에서 확인이 필요합니다.")
+                results.append((name, login_id, None, "충돌: 확인 필요"))
+                continue
+            if args.dry_run:
+                print(f"  - (dry-run) 로그인 계정이 없음 → 같은 uid({old_uid})로 {email} 재생성 예정, 기존 풀이는 그대로 유지")
+                results.append((name, login_id, "(dry-run)", "재생성 예정"))
+                continue
+            password = "".join(secrets.choice(PW_ALPHABET) for _ in range(10))
+            g.call("POST", f"https://identitytoolkit.googleapis.com/v1/projects/{pid}/accounts",
+                   {"localId": old_uid, "email": email, "password": password, "displayName": name, "emailVerified": False})
+            db_update({f"users/{old_uid}/tempPassword": True, f"users/{old_uid}/authEmail": None,
+                       f"users/{old_uid}/loginId": login_id, f"loginIndex/{login_id}": old_uid,
+                       f"nameIndex/{name.lower()}": old_uid})
+            print(f"  - 완료: 같은 uid({old_uid})로 로그인 계정 재생성, 기존 풀이 유지")
+            results.append((name, login_id, password, "계정 재생성"))
             continue
         if args.dry_run:
             print(f"  - (dry-run) 계정 {email} 생성, 풀이 {len(cells)}개 복사 예정")

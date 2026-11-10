@@ -537,6 +537,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         user = db_get(f"users/{uid}") if uid else None
         if not user:
             _login_fails.setdefault(key, []).append(time.time())
+            # 화면에는 항상 같은 메시지를 주고(계정 존재 여부 노출 방지), 원인은 서버 로그에만 남긴다
+            reason = ("아이디 형식/비밀번호 비어 있음" if not (LOGIN_ID_RE.match(login_id) and password)
+                      else "DB에 이 아이디가 없음(loginIndex 없음: 계정 생성 스크립트 미실행 또는 아이디 불일치)" if not uid
+                      else "loginIndex 는 있으나 users 프로필이 없음")
+            print(f"[LOGIN] failed id={login_id}: {reason}")
             raise bad
         try:
             res = _identity_post("accounts:signInWithPassword",

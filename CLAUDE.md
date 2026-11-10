@@ -9,5 +9,5 @@
 
 ## 프로젝트 개요
 - 프런트: `index.html`, `js/`, `css/` (정적 파일, ES 모듈)
-- 서버: `server_db.py` (배포용, Firebase RTDB + Firebase Auth 토큰 검증), `server.py` (로컬용, 건드리지 않음)
+- 서버: `server_db.py` (배포용, Firebase RTDB + Firebase Auth 토큰 검증)
 - 계획서: `plan.md` (다중 사용자 확장 계획은 맨 아래 섹션)
