@@ -183,9 +183,16 @@
       <!-- TOP: Question Details Card -->
       <section class="question-card">
         <div class="question-card-header">
-          <div class="header-left">
-            <span class="q-badge q-num" id="current-q-num">Q. 01</span>
-            <h2 id="current-q-title">10배</h2>
+          <!-- 첫 줄: 번호 · 제목 · 접기 버튼(오른쪽 끝) -->
+          <div class="header-top">
+            <div class="header-left">
+              <span class="q-badge q-num" id="current-q-num">Q. 01</span>
+              <h2 id="current-q-title">10배</h2>
+            </div>
+            <button id="btn-collapse-left" class="panel-collapse-btn" title="문제 설명 접기"><i class="fa-solid fa-caret-left"></i></button>
+          </div>
+          <!-- 둘째 줄: 난이도 · 분류 -->
+          <div class="header-sub">
             <span class="q-badge q-diff" id="current-q-diff">기초</span>
             <span class="q-badge q-cat" id="current-q-cat">기초 문법</span>
           </div>

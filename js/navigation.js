@@ -312,7 +312,7 @@ export function renderSidebarQuestions() {
     item.innerHTML = `
       <div class="q-item-info">
         <span class="badge-tag ${q.difficulty}">${q.difficulty}</span>
-        <div class="q-item-title">${q.title}</div>
+        <div class="q-item-title">${q.id}. ${q.title}</div>
       </div>
       <div class="q-item-status">
         <span class="status-badge ${isSolved ? 'solved' : ''} ${isFailed ? 'failed' : ''}">

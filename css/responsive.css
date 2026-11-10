@@ -52,6 +52,20 @@
   padding: 4px 0;
 }
 .question-card-header {
+  flex-direction: column; /* 첫 줄: 번호 + 제목 / 둘째 줄: 난이도 · 분류 · 접기 버튼 */
+  align-items: stretch;
+  gap: 8px;
+}
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.header-top .header-left { flex: 1 1 auto; min-width: 0; }
+.header-sub {
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -93,6 +107,7 @@
 .col-resizer { display: none; }
 .row-resizer { display: none; }
 .side-toggle-btn { display: none; }
+.panel-collapse-btn { display: none; } /* 좁은 화면에는 접기 기능이 없다 (데스크톱 규칙에서 보여 줌) */
 
 /* 데스크톱 3단 배치: 왼쪽 문제 설명 | 가운데 에디터(위)+실행 결과(아래) | 오른쪽 문제 목록 */
 @media (min-width: 861px) {
@@ -145,7 +160,18 @@
     cursor: pointer;
   }
   .side-toggle-btn:hover { background: #9ca3af; }
-  .side-toggle-left  { left: var(--left-w, 30%); border-radius: 0 6px 6px 0; }
+  /* 왼쪽(문제 설명) 접기 버튼은 문제 창 제목 줄 안에 있다(.panel-collapse-btn).
+     떠 있는 이 버튼은 문제 창을 접었을 때 화면 왼쪽 끝에서 다시 열기 위해서만 보인다 */
+  .side-toggle-left  { display: none; left: 0; border-radius: 0 6px 6px 0; }
+  .panel-collapse-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    flex: 0 0 auto; margin-left: auto;
+    width: 28px; height: 24px; padding: 0;
+    border: 1px solid var(--border-color); border-radius: 4px;
+    background: var(--bg-tertiary, #f3f4f6); color: var(--text-muted, #6b7280);
+    font-size: 0.75rem; cursor: pointer;
+  }
+  .panel-collapse-btn:hover { background: var(--border-strong, #d1d5db); color: var(--text-main, #111827); }
   .side-toggle-right { right: var(--right-w, 20vw); border-radius: 6px 0 0 6px; }
 
   .main-container.left-collapsed  { grid-template-columns: 0 minmax(0, 1fr) var(--right-w, clamp(260px, 20vw, 360px)); }
@@ -155,7 +181,11 @@
   .main-container.right-collapsed .sidebar-questions,
   .main-container.left-collapsed .col-resizer-left,
   .main-container.right-collapsed .col-resizer-right { display: none; }
-  .main-container.left-collapsed .side-toggle-left { left: 0; }
+  /* 접었을 때 다시 여는 버튼: 화면 왼쪽 가장자리 중간 높이의 얇은 세로 탭 (에디터 탭 줄을 가리지 않는다) */
+  .main-container.left-collapsed .side-toggle-left {
+    display: block; left: 0; width: 16px; height: 48px; padding: 0;
+    border-radius: 0 6px 6px 0;
+  }
   .main-container.right-collapsed .side-toggle-right { right: 0; }
 
   body.col-resizing { cursor: col-resize; user-select: none; }
@@ -167,6 +197,7 @@
     grid-column: 1;
     grid-row: 1;
     overflow-y: auto;
+    scrollbar-gutter: stable; /* 스크롤바가 있든 없든 내용 폭이 같아서, 제목/접기 버튼 위치가 변하지 않는다 */
     border-bottom: none;
     border-right: 1px solid var(--border-color);
   }

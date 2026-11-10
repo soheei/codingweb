@@ -92,6 +92,8 @@ export function setupEventListeners() {
     });
   };
   setupSidePanelToggle("btn-toggle-left", "left-collapsed", "fa-caret-left", "fa-caret-right");
+  // 문제 창 제목 줄 안의 접기 버튼: 위의 토글(상태 저장 포함)을 그대로 누른 것과 같다
+  document.getElementById("btn-collapse-left")?.addEventListener("click", () => document.getElementById("btn-toggle-left").click());
   setupSidePanelToggle("btn-toggle-right", "right-collapsed", "fa-caret-right", "fa-caret-left");
 
   // 6. 비교 모드 토글 및 4명 동시 실행
