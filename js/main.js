@@ -1,5 +1,5 @@
 import { generateAll100Questions } from './questions.js';
-import { STATE, loadFavorites } from './config.js';
+import { MAX_COMPARE, STATE, loadFavorites } from './config.js';
 import { requireLogin, setupAccountUi } from './auth.js';
 import { loadCompareSelection, restoreDiffMode, setupCompareView, setupComparePicker } from './compare.js';
 import { initCodeMirror } from './editor.js';
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     STATE.currentMember = savedView.member;
     // 추가해 둔 목록에 없는 사람을 보고 있었다면 목록에 넣어 주고(자리가 없으면 내 코드로)
     if (STATE.currentMember !== me.uid && !STATE.compareUids.includes(STATE.currentMember)) {
-      if (STATE.compareUids.length < 4) STATE.compareUids.push(STATE.currentMember);
+      if (STATE.compareUids.length < MAX_COMPARE - 1) STATE.compareUids.push(STATE.currentMember);
       else STATE.currentMember = me.uid;
     }
   }

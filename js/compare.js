@@ -4,13 +4,14 @@ import { loadCurrentMemberCode, renderMemberTabs, saveViewState, switchOwner } f
 import { showToast } from './ui.js';
 
 /* ==========================================================================
-   N-Member Comparison View (나 + 1~4명 = 2~5명)
+   N-Member Comparison View (나 + 1~5명 = 2~6명)
    - 내 카드만 편집 가능, 나머지는 읽기 전용(실행/복사 가능)
    - 카드 사이 경계선 드래그로 가로·세로 크기 자유 조절, 카드별 최대화
    ========================================================================== */
 export const quadEditors = {};
 
-const LAYOUT = { 2: { c: 2, r: 1 }, 3: { c: 3, r: 1 }, 4: { c: 2, r: 2 }, 5: { c: 3, r: 2 } };
+// 인원별 기본 분할(열 × 행). 5명은 3×2 에서 마지막 카드가 2칸을 차지, 6명은 3×2
+const LAYOUT = { 2: { c: 2, r: 1 }, 3: { c: 3, r: 1 }, 4: { c: 2, r: 2 }, 5: { c: 3, r: 2 }, 6: { c: 3, r: 2 } };
 let cols = [];
 let rows = [];
 let maximized = null; // 최대화된 카드의 uid

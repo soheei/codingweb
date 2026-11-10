@@ -649,7 +649,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         uids = {claims["uid"]}
         for chunk in query.get("users", []):
             uids.update(u for u in chunk.split(",") if re.match(r"^[A-Za-z0-9_\-]{1,40}$", u))
-        if len(uids) > 6:  # 나 + 최대 5명
+        if len(uids) > 8:  # 나 + 추가한 사람 최대 5명 (+ 보고 있는 사람) 에 여유를 둔 상한
             raise ApiError(400, "too_many_users", "한 번에 조회할 수 있는 사용자 수를 초과했습니다")
         since = (query.get("since", [""])[0] or "").strip()
         self._json(200, cache_sync(uids, since))

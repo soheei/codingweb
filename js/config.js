@@ -34,7 +34,7 @@ export const STORAGE_KEY_COMPARE = "codingmasters_compare_v1";
 export const STORAGE_KEY_FAV = "codingmasters_favorites_v1";
 
 export const MIN_COMPARE = 2; // 나 포함 최소 인원
-export const MAX_COMPARE = 5; // 나 포함 최대 인원
+export const MAX_COMPARE = 6; // 나 포함 최대 인원
 
 export const STATE = {
   questions: [],        // 지금은 1차 문제 100개 (2차 문제가 만들어지면 STATE.round 로 구분해 불러온다)
