@@ -102,6 +102,19 @@ function closePicker() {
 }
 
 export function setupMobile() {
+  // 실제 보이는 높이(아이폰 주소창/키보드 반영)를 CSS 변수로 전달
+  const vv = window.visualViewport;
+  const syncHeight = () => {
+    const h = Math.round(vv ? vv.height : window.innerHeight);
+    document.documentElement.style.setProperty("--app-h", h + "px");
+    if (isMobile() && (window.scrollY || (vv && vv.offsetTop))) window.scrollTo(0, 0);
+    STATE.editor?.refresh();
+  };
+  syncHeight();
+  (vv || window).addEventListener("resize", syncHeight);
+  vv?.addEventListener("scroll", syncHeight);
+  window.addEventListener("orientationchange", () => setTimeout(syncHeight, 200));
+
   paintPane();
 
   // 문제 번호 버튼 → 문제 선택 모달 (코드 탭, 비교 탭 공통)

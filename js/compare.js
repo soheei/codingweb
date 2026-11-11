@@ -269,6 +269,7 @@ export async function renderCompareView() {
       autoCloseBrackets: me,
       indentUnit: 4,
       tabSize: 4,
+      inputStyle: window.matchMedia("(pointer: coarse)").matches ? "contenteditable" : "textarea",
       readOnly: me ? false : true
     });
     cm.setValue(code);

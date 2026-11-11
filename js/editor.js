@@ -15,6 +15,8 @@ export function initCodeMirror() {
     indentUnit: 4,
     tabSize: 4,
     indentWithTabs: false,
+    // 터치 기기(아이폰 등): 한글 입력기/키보드가 안정적으로 동작하는 contenteditable 방식 사용
+    inputStyle: window.matchMedia("(pointer: coarse)").matches ? "contenteditable" : "textarea",
     extraKeys: {
       "Ctrl-Enter": () => runCode(),
       "Cmd-Enter": () => runCode(),      "Ctrl-S": (cm) => { executeSave(true); },

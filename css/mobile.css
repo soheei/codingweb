@@ -14,7 +14,12 @@
 
   /* ---------- 앱 틀: 화면 높이에 딱 맞추고 안쪽만 스크롤 ---------- */
   html, body { height: 100%; overflow: hidden; min-height: 0; }
-  body { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+  /* 높이는 JS가 실제 보이는 영역(주소창·키보드 제외)으로 --app-h 에 넣어 준다 (아이폰 하단 잘림 방지) */
+  body {
+    position: fixed; top: 0; left: 0; width: 100%;
+    height: 100vh; height: 100dvh; height: var(--app-h, 100dvh);
+    display: flex; flex-direction: column;
+  }
 
   .app-header {
     flex: 0 0 auto;
