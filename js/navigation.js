@@ -40,7 +40,12 @@ export function loadQuestion(id) {
 
   document.getElementById("current-q-num").textContent = `Q. ${String(q.id).padStart(2, '0')}`;
   document.getElementById("current-q-title").textContent = q.title;
-  
+  // 모바일 상단 한 줄 요약
+  const mNum = document.getElementById("m-qbar-num");
+  if (mNum) mNum.textContent = `Q. ${String(q.id).padStart(2, '0')}`;
+  const mTitle = document.getElementById("m-qbar-title");
+  if (mTitle) mTitle.textContent = q.title;
+
   const diffBadge = document.getElementById("current-q-diff");
   diffBadge.textContent = q.difficulty;
   diffBadge.className = `q-badge q-diff ${q.difficulty}`;

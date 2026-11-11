@@ -5,6 +5,7 @@ import { loadCompareSelection, restoreDiffMode, setupCompareView, setupComparePi
 import { initCodeMirror } from './editor.js';
 import { setupEventListeners } from './events.js';
 import { loadQuestion, loadViewState, renderCategoryFilter, renderMemberTabs, renderSidebarQuestions, updateProgress } from './navigation.js';
+import { setupMobile } from './mobile.js';
 import { setupNotebookExport } from './notebook.js';
 import { setupColumnResizers, setupRowResizers, setupTerminalResizer } from './resizer.js';
 import { initPyodide } from './runner.js';
@@ -87,6 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupRowResizers();
   setupTerminalResizer();
   if (savedView?.isDiffMode) restoreDiffMode();
+  setupMobile();
 
   // 6. 배포 서버(server_db.py) 변경 감지 폴링: 다른 사람이 저장하면 새로고침 없이 반영
   setupServerPolling();
