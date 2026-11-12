@@ -326,10 +326,9 @@ function neighborQuestionId(delta) {
 
 // 처음/마지막 문제면 버튼을 흐리게 (disabled 대신 클래스: 눌렀을 때 피드백을 주기 위해)
 export function updateQuestionNav() {
-  [["btn-q-prev", -1], ["btn-q-next", 1]].forEach(([id, delta]) => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    const edge = neighborQuestionId(delta) === null;
+  // 코드 탭과 비교 탭에 각각 버튼이 있으므로 data-step 으로 모두 찾는다
+  document.querySelectorAll(".q-step-btn[data-step]").forEach(btn => {
+    const edge = neighborQuestionId(Number(btn.dataset.step)) === null;
     btn.classList.toggle("is-edge", edge);
     btn.setAttribute("aria-disabled", String(edge));
   });

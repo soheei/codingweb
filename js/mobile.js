@@ -151,16 +151,18 @@ export function setupMobile() {
 
   // 이전/다음 문제: 버튼과 스와이프가 같은 함수(step)를 쓴다.
   // 처음/마지막 문제라 이동할 수 없으면 버튼을 살짝 흔들어 알려 준다
-  const step = (delta) => {
+  const step = (delta, btn) => {
     if (stepQuestion(delta)) return;
-    const btn = $(delta < 0 ? "btn-q-prev" : "btn-q-next");
-    if (!btn) return;
-    btn.classList.remove("bump");
-    void btn.offsetWidth; // 애니메이션을 처음부터 다시 재생
-    btn.classList.add("bump");
+    // 누른 버튼(스와이프면 지금 탭에 보이는 버튼)을 흔든다
+    const target = btn || [...document.querySelectorAll(`.q-step-btn[data-step="${delta}"]`)].find(b => b.offsetParent !== null);
+    if (!target) return;
+    target.classList.remove("bump");
+    void target.offsetWidth; // 애니메이션을 처음부터 다시 재생
+    target.classList.add("bump");
   };
-  $("btn-q-prev")?.addEventListener("click", () => step(-1));
-  $("btn-q-next")?.addEventListener("click", () => step(1));
+  document.querySelectorAll(".q-step-btn[data-step]").forEach(btn => {
+    btn.addEventListener("click", () => step(Number(btn.dataset.step), btn));
+  });
 
   // 스와이프(코드 탭): 에디터 바깥에서 시작한 가로 스와이프만 인식한다.
   // 에디터, 탭 목록(가로 스크롤), 입력/결과 패널, 입력창, 문제 설명 모달은 제외 → 그 안의 터치·스크롤·선택 동작은 그대로

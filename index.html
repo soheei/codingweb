@@ -45,7 +45,7 @@
   <link rel="stylesheet" href="css/auth.css?v=20261112_01">
   <link rel="stylesheet" href="css/responsive.css?v=20261103_03">
   <link rel="stylesheet" href="css/clean.css?v=20261112_01">
-  <link rel="stylesheet" href="css/mobile.css?v=20261112_07">
+  <link rel="stylesheet" href="css/mobile.css?v=20261112_08">
 </head>
 <body class="ivory-theme" data-mpane="list">
   <!-- 첫 화면 로딩 (CSS/JS 번들 없이 이 파일만으로 동작). 서버가 잠들어 있으면 응답이 늦을 수 있다 -->
@@ -280,8 +280,8 @@
           </div>
           <!-- 모바일 전용: 이전/다음 문제 (탭이 많아져도 오른쪽에 고정, 탭 쪽만 가로 스크롤) -->
           <div class="q-step" role="group" aria-label="문제 이동">
-            <button type="button" class="q-step-btn" id="btn-q-prev" aria-label="이전 문제" title="이전 문제"><i class="fa-solid fa-chevron-left"></i></button>
-            <button type="button" class="q-step-btn" id="btn-q-next" aria-label="다음 문제" title="다음 문제"><i class="fa-solid fa-chevron-right"></i></button>
+            <button type="button" class="q-step-btn" data-step="-1" aria-label="이전 문제" title="이전 문제"><i class="fa-solid fa-chevron-left"></i></button>
+            <button type="button" class="q-step-btn" data-step="1" aria-label="다음 문제" title="다음 문제"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
 
           <div class="editor-tools">
@@ -366,6 +366,11 @@
           <div class="diff-title-badge">
             <i class="fa-solid fa-users"></i>
             <span class="compare-chips" id="compare-chips"></span>
+          </div>
+          <!-- 모바일 전용: 이전/다음 문제 (코드 탭과 같은 버튼, 같은 이동 함수) -->
+          <div class="q-step" role="group" aria-label="문제 이동">
+            <button type="button" class="q-step-btn" data-step="-1" aria-label="이전 문제" title="이전 문제"><i class="fa-solid fa-chevron-left"></i></button>
+            <button type="button" class="q-step-btn" data-step="1" aria-label="다음 문제" title="다음 문제"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
           <div class="diff-actions">
             <span class="compare-count" id="compare-count"></span>
@@ -716,6 +721,6 @@
     else start();
   })();
   </script>
-  <script type="module" src="js/main.js?v=20261112_06"></script>
+  <script type="module" src="js/main.js?v=20261112_07"></script>
 </body>
 </html>

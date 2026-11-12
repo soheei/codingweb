@@ -395,8 +395,12 @@
   .diff-header-bar {
     position: sticky; top: 0; z-index: 5; flex: none;
     height: auto; flex-direction: column; align-items: stretch;
-    background: #fbf9f4; padding: 8px 10px; gap: 8px;
+    background: #fbf9f4; padding: 8px 10px; gap: 8px; /* 방향은 아래 "비교 대상 줄" 규칙에서 row 로 바뀐다 */
   }
+  /* 비교 대상 줄: 사람 칩은 왼쪽(줄바꿈), 이전/다음 문제 버튼은 오른쪽 끝에 고정 */
+  .diff-header-bar { flex-direction: row; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; } /* auth.css 의 wrap 이면 버튼이 아래로 밀린다 */
+  .diff-header-bar .diff-title-badge { flex: 1 1 0; min-width: 0; }
+  .diff-header-bar .q-step { display: flex; flex: none; align-items: center; gap: 6px; }
   .diff-title-badge { min-width: 0; align-items: flex-start; }
   .compare-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
   /* 비교 버튼 두 개는 문제 요약줄로 옮겨졌다(js/mobile.js). 남은 빈 영역은 숨긴다 */
