@@ -1,6 +1,6 @@
 import { MIN_COMPARE, STATE, escapeHtml } from './config.js';
 import { enterDiffMode, exitDiffMode, openComparePicker } from './compare.js';
-import { isSolvedByCurrentMember, loadQuestion } from './navigation.js';
+import { isSolvedByCurrentMember, loadQuestion, stepQuestion } from './navigation.js';
 import { saveLocal } from './storage.js';
 
 const PANE_KEY = "codingmasters_mpane_v1"; // 마지막으로 쓴 하단 탭 (list | code | compare)
@@ -119,11 +119,17 @@ function closePicker() {
 export function setupMobile() {
   // 실제 보이는 높이(아이폰 주소창/키보드 반영)를 CSS 변수로 전달
   const vv = window.visualViewport;
+  // 커서가 있는 줄이 에디터 안에서 보이도록 스크롤 (키보드로 에디터 높이가 바뀐 뒤)
+  const keepCursorVisible = () => requestAnimationFrame(() => STATE.editor?.scrollIntoView(null, 32));
   const syncHeight = () => {
+    const root = document.documentElement.style;
     const h = Math.round(vv ? vv.height : window.innerHeight);
-    document.documentElement.style.setProperty("--app-h", h + "px");
+    root.setProperty("--app-h", h + "px");
+    // iOS 가 키보드를 띄우며 화면을 위로 옮긴 양. 키보드 상태(body.m-typing)에서 body 를 그만큼 내린다 (mobile.css)
+    root.setProperty("--app-top", Math.round(vv ? vv.offsetTop : 0) + "px");
     if (isMobile() && (window.scrollY || (vv && vv.offsetTop))) window.scrollTo(0, 0);
     STATE.editor?.refresh();
+    if (document.body.classList.contains("m-typing")) keepCursorVisible();
   };
   syncHeight();
   (vv || window).addEventListener("resize", syncHeight);
@@ -142,6 +148,42 @@ export function setupMobile() {
   document.querySelectorAll("#m-nav button").forEach(btn => {
     btn.addEventListener("click", () => setPane(btn.dataset.pane));
   });
+
+  // 이전/다음 문제: 버튼과 스와이프가 같은 함수(step)를 쓴다.
+  // 처음/마지막 문제라 이동할 수 없으면 버튼을 살짝 흔들어 알려 준다
+  const step = (delta) => {
+    if (stepQuestion(delta)) return;
+    const btn = $(delta < 0 ? "btn-q-prev" : "btn-q-next");
+    if (!btn) return;
+    btn.classList.remove("bump");
+    void btn.offsetWidth; // 애니메이션을 처음부터 다시 재생
+    btn.classList.add("bump");
+  };
+  $("btn-q-prev")?.addEventListener("click", () => step(-1));
+  $("btn-q-next")?.addEventListener("click", () => step(1));
+
+  // 스와이프(코드 탭): 에디터 바깥에서 시작한 가로 스와이프만 인식한다.
+  // 에디터, 탭 목록(가로 스크롤), 입력/결과 패널, 입력창, 문제 설명 모달은 제외 → 그 안의 터치·스크롤·선택 동작은 그대로
+  const SWIPE_SKIP = ".CodeMirror, .member-tabs, .terminal-panel, .question-card, input, textarea, select";
+  let swipe = null;
+  const workspace = document.querySelector(".workspace");
+  workspace?.addEventListener("touchstart", (e) => {
+    swipe = null;
+    if (!isMobile() || pane !== "code" || e.touches.length !== 1) return;
+    if (document.body.classList.contains("desc-open") || document.body.classList.contains("picker-open")) return;
+    if (e.target.closest(SWIPE_SKIP)) return;
+    const t = e.touches[0];
+    swipe = { x: t.clientX, y: t.clientY, at: Date.now() };
+  }, { passive: true });
+  workspace?.addEventListener("touchend", (e) => {
+    if (!swipe) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipe.x, dy = t.clientY - swipe.y, quick = Date.now() - swipe.at < 700;
+    swipe = null;
+    // 충분히 길고(60px), 거의 수평이고, 빠른 동작만: 세로 스크롤·탭과 헷갈리지 않게
+    if (quick && Math.abs(dx) >= 60 && Math.abs(dx) > Math.abs(dy) * 2) step(dx < 0 ? 1 : -1);
+  }, { passive: true });
+  workspace?.addEventListener("touchcancel", () => { swipe = null; }, { passive: true });
 
   // 문제를 고르면 마지막으로 쓰던 작업 탭(코드/비교)으로 이동
   $("question-list").addEventListener("click", (e) => {
@@ -216,6 +258,7 @@ export function setupMobile() {
     if (!isMobile() || !e.target.closest(".CodeMirror")) return;
     clearTimeout(blurTimer);
     document.body.classList.add("m-typing");
+    requestAnimationFrame(syncHeight); // 패널이 숨겨져 에디터가 커진 뒤 높이/커서 위치를 다시 맞춘다
   });
   view.addEventListener("focusout", (e) => {
     if (!e.target.closest(".CodeMirror")) return;

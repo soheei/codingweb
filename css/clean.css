@@ -37,6 +37,10 @@
 body, body.ivory-theme { font-family: var(--font-sans); color: var(--text-main); }
 
 :focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+/* 코드 에디터(CodeMirror)는 제외: 모바일의 contenteditable 입력 영역은 코드 길이만큼 커서
+   이 테두리의 위/아래 변만 파란 가로줄로 보였다. 포커스는 깜박이는 커서로 표시된다 */
+.CodeMirror .CodeMirror-code:focus-visible,
+.CodeMirror textarea:focus-visible { outline: none; }
 button, select, input, textarea { font-family: inherit; }
 
 /* ---------- 헤더 ---------- */

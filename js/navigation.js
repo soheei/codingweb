@@ -1,6 +1,6 @@
 import { exitDiffMode, renderCompareView, saveCompareSelection } from './compare.js';
 import { DEFAULT_CODE, MAX_COMPARE, MIN_COMPARE, STATE, moveItem, sortFavoritesFirst, toggleFavorite, STORAGE_KEY_VIEW, escapeHtml, isMe, isViewingOther, nameOf } from './config.js';
-import { fetchSolutions, saveLocal, updateSaveStatus } from './storage.js';
+import { executeSave, fetchSolutions, saveLocal, updateSaveStatus } from './storage.js';
 import { showToast } from './ui.js';
 
 /* ==========================================================================
@@ -37,6 +37,7 @@ export function loadQuestion(id) {
   STATE.currentQuestionId = id;
   const q = STATE.questions.find(x => x.id === id);
   if (!q) return;
+  updateQuestionNav();
 
   document.getElementById("current-q-num").textContent = `Q. ${String(q.id).padStart(2, '0')}`;
   document.getElementById("current-q-title").textContent = q.title;
@@ -285,26 +286,70 @@ export function renderMemberTabs() {
   container.appendChild(dd);
 }
 
-export function renderSidebarQuestions() {
-  const listEl = document.getElementById("question-list");
+/* ==========================================================================
+   문제 목록 필터 / 이전·다음 문제 이동
+   ========================================================================== */
+// 목록에 보이는 문제들 (검색어 · 난이도 · 분류 필터 적용, 목록과 같은 순서)
+export function getFilteredQuestions() {
+  if (STATE.round !== 1) return []; // 2차 문제는 아직 없음
   const searchQuery = document.getElementById("question-search").value.toLowerCase().trim();
   const filterDiff = document.getElementById("filter-difficulty").value;
   const filterCat = document.getElementById("filter-category").value;
+  return STATE.questions.filter(q => {
+    const matchSearch = String(q.id).includes(searchQuery) || q.title.toLowerCase().includes(searchQuery) || q.category.toLowerCase().includes(searchQuery);
+    const matchDiff = filterDiff === "all" || q.difficulty === filterDiff;
+    const matchCat = filterCat === "all" || q.category === filterCat;
+    return matchSearch && matchDiff && matchCat;
+  });
+}
+
+// 목록 순서에서 delta(-1 이전 / +1 다음) 만큼 떨어진 문제 번호. 없으면(처음/마지막) null.
+// 지금 문제가 필터 때문에 목록에 없으면 번호가 가장 가까운 앞/뒤 문제로 간다.
+function neighborQuestionId(delta) {
+  const list = getFilteredQuestions();
+  const cur = STATE.currentQuestionId;
+  const idx = list.findIndex(q => q.id === cur);
+  if (idx >= 0) return list[idx + delta]?.id ?? null;
+  if (delta > 0) return list.find(q => q.id > cur)?.id ?? null;
+  const before = list.filter(q => q.id < cur);
+  return before.length ? before[before.length - 1].id : null;
+}
+
+// 처음/마지막 문제면 버튼을 흐리게 (disabled 대신 클래스: 눌렀을 때 피드백을 주기 위해)
+export function updateQuestionNav() {
+  [["btn-q-prev", -1], ["btn-q-next", 1]].forEach(([id, delta]) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const edge = neighborQuestionId(delta) === null;
+    btn.classList.toggle("is-edge", edge);
+    btn.setAttribute("aria-disabled", String(edge));
+  });
+}
+
+// 이전/다음 문제로 이동 (버튼과 스와이프가 함께 쓴다). 이동했으면 true.
+export function stepQuestion(delta) {
+  const id = neighborQuestionId(delta);
+  if (id === null) return false;
+  // 저장 안 된 내 코드가 있으면 서버까지 저장한다. 저장할 문제 번호는 호출 순간에 정해지므로 바로 이동해도 된다
+  if (STATE.hasUnsavedChanges && isMe(STATE.currentMember)) executeSave(false);
+  loadQuestion(id);
+  return true;
+}
+
+export function renderSidebarQuestions() {
+  const listEl = document.getElementById("question-list");
 
   listEl.innerHTML = "";
 
   // 2차 문제는 아직 없음 — 문제가 만들어지면 여기서 2차 목록을 쓰도록 바꾼다
   if (STATE.round !== 1) {
     listEl.innerHTML = '<div class="q-empty" style="padding: 24px 12px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">2차 문제는 준비 중입니다.</div>';
+    updateQuestionNav();
     return;
   }
 
-  const filtered = STATE.questions.filter(q => {
-    const matchSearch = String(q.id).includes(searchQuery) || q.title.toLowerCase().includes(searchQuery) || q.category.toLowerCase().includes(searchQuery);
-    const matchDiff = filterDiff === "all" || q.difficulty === filterDiff;
-    const matchCat = filterCat === "all" || q.category === filterCat;
-    return matchSearch && matchDiff && matchCat;
-  });
+  const filtered = getFilteredQuestions();
+  updateQuestionNav(); // 필터가 바뀌면 이전/다음 버튼의 끝 표시도 바뀐다
 
   filtered.forEach(q => {
     const isSolved = isSolvedByCurrentMember(q.id);

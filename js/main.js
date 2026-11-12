@@ -5,7 +5,7 @@ import { loadCompareSelection, restoreDiffMode, setupCompareView, setupComparePi
 import { initCodeMirror } from './editor.js';
 import { setupEventListeners } from './events.js';
 import { loadQuestion, loadViewState, renderCategoryFilter, renderMemberTabs, renderSidebarQuestions, updateProgress } from './navigation.js';
-import { setupMobile } from './mobile.js?v=20261112_02';
+import { setupMobile } from './mobile.js?v=20261112_04';
 import { setupNotebookExport } from './notebook.js';
 import { setupColumnResizers, setupRowResizers, setupTerminalResizer } from './resizer.js';
 import { initPyodide } from './runner.js';
