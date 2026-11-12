@@ -47,7 +47,7 @@
   <link rel="stylesheet" href="css/clean.css?v=20261110_03">
   <link rel="stylesheet" href="css/mobile.css?v=20261112_01">
 </head>
-<body class="ivory-theme">
+<body class="ivory-theme" data-mpane="list">
   <!-- 첫 화면 로딩 (CSS/JS 번들 없이 이 파일만으로 동작). 서버가 잠들어 있으면 응답이 늦을 수 있다 -->
   <style>
     #boot-loader{position:fixed;inset:0;z-index:4000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;background:#f8f6f0;color:#2d3748;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transition:opacity .35s ease,visibility .35s}
@@ -540,6 +540,41 @@
     </div>
   </div>
 
-  <script type="module" src="js/main.js?v=20261112_01"></script>
+  <!-- 진단용: 주소 뒤에 ?debug=1 을 붙였을 때만 동작 (화면 높이/안전영역 실측값 표시) -->
+  <script>
+  (function () {
+    if (!/[?&]debug=1/.test(location.search)) return;
+    var probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;visibility:hidden;pointer-events:none";
+    probe.innerHTML = '<div id="p-dvh" style="height:100dvh"></div><div id="p-svh" style="height:100svh"></div><div id="p-lvh" style="height:100lvh"></div><div id="p-sab" style="height:env(safe-area-inset-bottom,0px)"></div><div id="p-sat" style="height:env(safe-area-inset-top,0px)"></div>';
+    var box = document.createElement("pre");
+    box.style.cssText = "position:fixed;left:6px;top:70px;z-index:5000;margin:0;padding:6px 8px;max-width:calc(100vw - 12px);background:rgba(0,0,0,.82);color:#7CFC9A;font:11px/1.35 monospace;white-space:pre-wrap;border-radius:6px";
+    function h(id) { return Math.round(document.getElementById(id).getBoundingClientRect().height); }
+    function r(el) { if (!el) return "(없음)"; var b = el.getBoundingClientRect(); return "top " + Math.round(b.top) + " / bottom " + Math.round(b.bottom) + " / h " + Math.round(b.height); }
+    function update() {
+      var vv = window.visualViewport, nav = document.getElementById("m-nav");
+      box.textContent = [
+        "innerW×H: " + innerWidth + "×" + innerHeight + "   screen: " + screen.width + "×" + screen.height,
+        "visualViewport: h " + (vv ? Math.round(vv.height) : "-") + " / top " + (vv ? Math.round(vv.offsetTop) : "-") + " / scale " + (vv ? vv.scale : "-"),
+        "dvh " + h("p-dvh") + "  svh " + h("p-svh") + "  lvh " + h("p-lvh"),
+        "safe-area bottom " + h("p-sab") + "  top " + h("p-sat"),
+        "body: " + r(document.body),
+        "m-nav: " + r(nav),
+        "nav padding-bottom: " + (nav ? getComputedStyle(nav).paddingBottom : "-"),
+        "standalone: " + (navigator.standalone === true) + " / display-mode: " + (matchMedia("(display-mode: standalone)").matches ? "standalone" : "browser"),
+        "mpane: " + document.body.dataset.mpane + "  (탭하면 숨김)"
+      ].join("
+");
+    }
+    box.addEventListener("click", function () { box.style.display = "none"; });
+    document.addEventListener("DOMContentLoaded", function () {
+      document.body.appendChild(probe); document.body.appendChild(box);
+      update(); setInterval(update, 500);
+      window.addEventListener("resize", update);
+      if (window.visualViewport) { visualViewport.addEventListener("resize", update); visualViewport.addEventListener("scroll", update); }
+    });
+  })();
+  </script>
+  <script type="module" src="js/main.js?v=20261112_02"></script>
 </body>
 </html>

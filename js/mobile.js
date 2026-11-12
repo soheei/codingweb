@@ -3,6 +3,9 @@ import { enterDiffMode, exitDiffMode, openComparePicker } from './compare.js';
 import { isSolvedByCurrentMember, loadQuestion } from './navigation.js';
 import { saveLocal } from './storage.js';
 
+const PANE_KEY = "codingmasters_mpane_v1"; // 마지막으로 쓴 하단 탭 (list | code | compare)
+const PANES = ["list", "code", "compare"];
+
 /* ==========================================================================
    모바일 전용 동작 (폭 860px 이하): 하단 탭(문제/코드/비교), 문제 설명 모달,
    입력/결과 전환, 키보드 위 단축키 줄. 데스크톱 화면에는 영향이 없다.
@@ -10,12 +13,23 @@ import { saveLocal } from './storage.js';
 const $ = (id) => document.getElementById(id);
 const isMobile = () => window.matchMedia("(max-width: 860px)").matches;
 
-let pane = "code";          // 현재 탭: list | code | compare
+let pane = "list";          // 현재 탭: list | code | compare (처음 방문 기본값은 문제 탭)
 let lastWorkPane = "code";  // 문제를 고른 뒤 돌아갈 탭 (code 또는 compare)
 
 function paintPane() {
   document.body.dataset.mpane = pane;
   document.querySelectorAll("#m-nav button").forEach(b => b.classList.toggle("on", b.dataset.pane === pane));
+}
+
+// 탭을 직접 바꿨을 때만 저장한다. 저장소를 못 쓰는 환경(사생활 보호 모드 등)에서는 조용히 넘어간다
+function savePane() {
+  try { localStorage.setItem(PANE_KEY, pane); } catch (e) { /* 무시 */ }
+}
+function readSavedPane() {
+  try {
+    const v = localStorage.getItem(PANE_KEY);
+    return PANES.includes(v) ? v : null; // 값이 이상하면 없는 것으로 취급
+  } catch (e) { return null; }
 }
 
 function afterPaneChange() {
@@ -28,7 +42,7 @@ function afterPaneChange() {
 
 export function setPane(next) {
   if (next === "compare") {
-    const start = () => { enterDiffMode(); pane = "compare"; lastWorkPane = "compare"; paintPane(); afterPaneChange(); };
+    const start = () => { enterDiffMode(); pane = "compare"; lastWorkPane = "compare"; savePane(); paintPane(); afterPaneChange(); };
     if (STATE.isDiffMode) { start(); return; }
     // 이미 비교할 사람을 골라 둔 상태면 선택창 없이 바로 들어간다 ("비교 대상 변경" 버튼으로 바꿀 수 있다)
     if (STATE.compareUids.length >= MIN_COMPARE - 1) start();
@@ -40,6 +54,7 @@ export function setPane(next) {
     lastWorkPane = "code";
   }
   pane = next;
+  savePane();
   paintPane();
   afterPaneChange();
 }
@@ -210,9 +225,18 @@ export function setupMobile() {
     }, 200);
   });
 
-  // 처음 화면: 저장된 비교 화면이 있으면 비교, 아니면 코드
-  pane = STATE.isDiffMode ? "compare" : "code";
-  lastWorkPane = pane;
+  // 처음 화면: 마지막으로 쓴 탭. 저장된 값이 없거나 맞지 않으면 문제 탭에서 시작하고 자동으로 옮기지 않는다
+  if (isMobile()) {
+    const saved = readSavedPane();
+    if (saved === "compare" && STATE.isDiffMode) pane = "compare";
+    else if (saved === "code") { if (STATE.isDiffMode) exitDiffMode(); pane = "code"; }
+    else pane = "list";
+    // 문제를 고르면 돌아갈 작업 탭: 목록에서 시작해도 비교 중이었다면 비교로
+    lastWorkPane = pane === "list" ? (STATE.isDiffMode ? "compare" : "code") : pane;
+  } else {
+    pane = STATE.isDiffMode ? "compare" : "code"; // 데스크톱은 탭이 없으니 기존 값 유지
+    lastWorkPane = pane;
+  }
   paintPane();
   afterPaneChange();
 
