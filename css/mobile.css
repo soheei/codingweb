@@ -379,6 +379,8 @@
     grid-template-rows: minmax(0, 1fr) auto minmax(0, 168px);
   }
   .input-hint { display: none; }
+  /* 실행 결과 창의 "Ctrl + Enter 를 누르면..." 안내: 모바일에는 키보드 단축키가 없으므로 숨긴다 */
+  .terminal-placeholder { display: none; }
   .btn-xs, .btn-icon-xs { min-height: 32px; }
   .terminal-body { padding-bottom: 72px; font-size: 0.85rem; }
 
