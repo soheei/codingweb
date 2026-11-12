@@ -544,7 +544,24 @@
        레이아웃에는 영향을 주지 않는다 (패널·측정용 요소는 position:fixed, 테두리는 outline 이라 크기가 변하지 않음) -->
   <script>
   (function () {
-    if (!/[?&]debug=1(&|$)/.test(location.search)) return;
+    // 켜는 방법: ① 주소에 ?debug=1  ② 헤더 로고를 2초 안에 5번 탭 (홈 화면 앱처럼 주소를 바꿀 수 없을 때). 패널의 [끄기]로 해제
+    var FLAG = "codingmasters_debug";
+    var flagOn = false;
+    try { flagOn = localStorage.getItem(FLAG) === "1"; } catch (e) { /* 저장소 사용 불가 */ }
+    if (!/[?&]debug=1(&|$)/.test(location.search) && !flagOn) {
+      var taps = [];
+      document.addEventListener("click", function (e) {
+        if (!e.target.closest || !e.target.closest(".app-header .brand-icon, .app-header .brand-text")) return;
+        var now = Date.now();
+        taps = taps.filter(function (t) { return now - t < 2000; });
+        taps.push(now);
+        if (taps.length >= 5) {
+          try { localStorage.setItem(FLAG, "1"); } catch (err) { /* 무시 */ }
+          location.reload();
+        }
+      });
+      return;
+    }
     var NL = String.fromCharCode(10);
 
     // 영역 경계: body=빨강 실선, 본문(.main-container)=파랑 점선, 탭 바=초록 실선, 헤더=주황 점선
@@ -576,16 +593,20 @@
     bar.style.cssText = "display:flex;gap:6px;padding:6px 6px 0";
     var btnCopy = document.createElement("button");
     var btnFold = document.createElement("button");
-    [btnCopy, btnFold].forEach(function (b) {
+    var btnOff = document.createElement("button");
+    [btnCopy, btnFold, btnOff].forEach(function (b) {
       b.type = "button";
       b.style.cssText = "flex:none;padding:4px 10px;border:0;border-radius:6px;background:#2563eb;color:#fff;font:600 12px sans-serif";
     });
     btnCopy.textContent = "값 복사";
     btnFold.textContent = "접기";
+    btnOff.textContent = "끄기";
+    btnOff.style.background = "#6b7280";
     var pre = document.createElement("pre");
     pre.style.cssText = "margin:0;padding:6px 8px 8px;white-space:pre-wrap;word-break:break-all;max-height:46vh;overflow:auto";
     bar.appendChild(btnCopy);
     bar.appendChild(btnFold);
+    bar.appendChild(btnOff);
     wrap.appendChild(bar);
     wrap.appendChild(pre);
 
@@ -664,6 +685,10 @@
       else fallback();
     }
     btnCopy.addEventListener("click", copy);
+    btnOff.addEventListener("click", function () {
+      try { localStorage.removeItem(FLAG); } catch (e) { /* 무시 */ }
+      location.href = location.pathname; // ?debug=1 도 떼고 다시 연다
+    });
     btnFold.addEventListener("click", function () {
       var hidden = pre.style.display === "none";
       pre.style.display = hidden ? "" : "none";
