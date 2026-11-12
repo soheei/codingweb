@@ -67,13 +67,14 @@ STATIC_FILES = {
     "/": "index.html",
     "/index.html": "index.html",
 }
-# js/, css/ 폴더 아래 정적 파일만 허용 (상위 경로 접근 차단)
-STATIC_DIRS = ("js", "css")
+# js/, css/, icons/ 폴더 아래 정적 파일만 허용 (상위 경로 접근 차단)
+STATIC_DIRS = ("js", "css", "icons")
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "application/javascript; charset=utf-8",
     ".css": "text/css; charset=utf-8",
     ".webmanifest": "application/manifest+json; charset=utf-8",
+    ".png": "image/png",
 }
 
 _lock = threading.Lock()
