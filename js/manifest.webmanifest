@@ -1,0 +1,9 @@
+{
+  "name": "Coding Masters 100",
+  "short_name": "Coding Masters",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8f6f0",
+  "theme_color": "#f8f6f0"
+}

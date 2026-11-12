@@ -18,15 +18,12 @@
   /* 화면(주소창·하단 툴바·안드로이드 내비게이션 바 제외)에 딱 붙이기: fixed + top/bottom 0 */
   body {
     position: fixed; top: 0; left: 0; right: 0; bottom: auto; width: auto;
-    /* bottom:0 은 iOS 에서 하단 툴바/홈 인디케이터 뒤까지 내려가 탭 바가 가려진다.
-       svh = 툴바가 펼쳐진 상태의 "항상 보이는" 높이. 미지원 브라우저는 100% 로 대체 */
-    height: 100%;
-    height: 100svh;
+    /* bottom:0 은 iOS 에서 하단 툴바/홈 인디케이터 뒤까지 내려가 탭 바가 가려진다 */
+    height: 100vh;   /* dvh 미지원 브라우저용 */
+    height: 100dvh;  /* 주소창·툴바가 접히고 펼쳐지는 것을 따라가는 "지금 보이는" 높이 */
     display: flex; flex-direction: column;
   }
-  @supports not (height: 100svh) {
-    body { bottom: 0; height: auto; }
-  }
+
   /* 키보드가 올라온 동안만 JS가 잰 보이는 높이를 쓴다 */
   body.m-typing { bottom: auto; height: var(--app-h, 100%); }
 

@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>Coding Masters 100</title>
+  <!-- 홈 화면에 추가했을 때 주소창 없이 앱처럼 실행 (iOS는 이 meta, 그 외는 manifest 를 본다) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Coding Masters">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#f8f6f0">
+  <link rel="manifest" href="js/manifest.webmanifest">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='26' fill='%2374b9ff'/%3E%3Cpath d='M38 72L26 84l4-18z M62 72l12 12-4-18z' fill='%23ff7675'/%3E%3Cpath d='M50 12c14 10 18 30 14 52H36c-4-22 0-42 14-52z' fill='%23fff'/%3E%3Cpath d='M50 12c8 6 13 14 15 24H35c2-10 7-18 15-24z' fill='%23ff7675'/%3E%3Ccircle cx='50' cy='48' r='8' fill='%2374b9ff' stroke='%23636e72' stroke-width='3'/%3E%3Cpath d='M42 68h16l-8 18z' fill='%23ffd54f'/%3E%3C/svg%3E">
   
   <!-- Google Fonts: Inter & Fira Code -->
@@ -37,9 +44,58 @@
   <link rel="stylesheet" href="css/auth.css?v=20261110_04">
   <link rel="stylesheet" href="css/responsive.css?v=20261103_03">
   <link rel="stylesheet" href="css/clean.css?v=20261110_03">
-  <link rel="stylesheet" href="css/mobile.css?v=20261111_19">
+  <link rel="stylesheet" href="css/mobile.css?v=20261112_01">
 </head>
 <body class="ivory-theme">
+  <!-- 첫 화면 로딩 (CSS/JS 번들 없이 이 파일만으로 동작). 서버가 잠들어 있으면 응답이 늦을 수 있다 -->
+  <style>
+    #boot-loader{position:fixed;inset:0;z-index:4000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;background:#f8f6f0;color:#2d3748;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transition:opacity .35s ease,visibility .35s}
+    #boot-loader.hide{opacity:0;visibility:hidden;pointer-events:none}
+    #boot-loader .bl-title{font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+    #boot-loader .bl-spin{position:relative;width:44px;height:44px}
+    #boot-loader .bl-spin i{position:absolute;width:20px;height:20px;border-radius:50%}
+    #boot-loader .bl-spin .b{left:0;top:0;background:#2563eb;animation:bl-a 1.2s ease-in-out infinite}
+    #boot-loader .bl-spin .y{right:0;bottom:0;background:#facc15;animation:bl-a 1.2s ease-in-out .6s infinite}
+    #boot-loader .bl-msg{max-width:300px;font-size:.85rem;line-height:1.6;color:#718096;min-height:3.2em}
+    #boot-loader .bl-msg button{margin-top:8px;padding:8px 18px;border:0;border-radius:8px;background:#2563eb;color:#fff;font:inherit;font-weight:600}
+    @keyframes bl-a{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(8px,-8px) scale(.7)}}
+    @media (prefers-reduced-motion:reduce){#boot-loader .bl-spin i{animation:none}}
+  </style>
+  <div id="boot-loader" role="status" aria-live="polite">
+    <div class="bl-spin"><i class="b"></i><i class="y"></i></div>
+    <div class="bl-title">Coding Masters 100</div>
+    <div class="bl-msg" id="boot-msg"></div>
+  </div>
+  <script>
+  (function () {
+    var el = document.getElementById("boot-loader"), msg = document.getElementById("boot-msg"), done = false, timers = [];
+    function hide() {
+      if (done) return; done = true; timers.forEach(clearTimeout);
+      el.classList.add("hide"); setTimeout(function () { el.style.display = "none"; }, 500);
+    }
+    window.__hideBootLoader = hide;
+    // 서버 응답이 늦을 때 안내 (무료 서버는 잠들었다 깨어난다)
+    timers.push(setTimeout(function () { if (!done) msg.textContent = "서버를 깨우는 중입니다. 최대 1분 정도 걸릴 수 있어요"; }, 4000));
+    // 끝내 안 열리면 영구히 가리지 않고 안내 + 다시 시도 버튼
+    timers.push(setTimeout(function () {
+      if (done) return;
+      msg.innerHTML = "연결이 오래 걸리고 있어요.<br>잠시 후 다시 시도해 주세요.<br><button type=\"button\" onclick=\"location.reload()\">다시 시도</button>";
+    }, 75000));
+    // 로그인 확인이 끝나 스플래시가 사라지거나 로그인 화면이 뜨면 로딩 화면을 걷는다
+    document.addEventListener("DOMContentLoaded", function () {
+      var sp = document.getElementById("auth-splash"), ov = document.getElementById("auth-overlay");
+      var check = function () {
+        if ((sp && sp.style.display === "none") || (ov && ov.style.display && ov.style.display !== "none")) hide();
+      };
+      var mo = new MutationObserver(check);
+      [sp, ov].forEach(function (n) { if (n) mo.observe(n, { attributes: true, attributeFilter: ["style", "class"] }); });
+      check();
+    });
+    // 스크립트 오류가 나면 아래 오류 화면이 보이도록 로딩 화면을 걷는다
+    function fail() { setTimeout(hide, 1500); }
+    window.addEventListener("error", fail); window.addEventListener("unhandledrejection", fail);
+  })();
+  </script>
   <!-- 로그인 확인 중 -->
   <div id="auth-splash" class="auth-splash"><i class="fa-solid fa-spinner fa-spin"></i> 로그인 정보를 확인하는 중...</div>
 
@@ -483,6 +539,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/main.js?v=20261112_01"></script>
 </body>
 </html>
