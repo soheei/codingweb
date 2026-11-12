@@ -6,7 +6,7 @@
    ========================================================================== */
 
 /* 데스크톱에서는 모바일 전용 요소를 모두 숨긴다 */
-.m-qbar, .m-nav, .m-backdrop, .m-picker, .m-keys, .m-term-tabs, .m-desc-x, .m-desc-foot, .m-only { display: none; }
+.m-qbar, .m-nav, .m-backdrop, .m-picker, .m-term-tabs, .m-desc-x, .m-desc-foot, .m-only { display: none; }
 
 @media (max-width: 860px) {
   :root { --m-nav-h: calc(58px + env(safe-area-inset-bottom, 0px)); }
@@ -17,8 +17,15 @@
   /* 높이는 JS가 실제 보이는 영역(주소창·키보드 제외)으로 --app-h 에 넣어 준다 (아이폰 하단 잘림 방지) */
   /* 화면(주소창·하단 툴바·안드로이드 내비게이션 바 제외)에 딱 붙이기: fixed + top/bottom 0 */
   body {
-    position: fixed; top: 0; bottom: 0; left: 0; right: 0; width: auto; height: auto;
+    position: fixed; top: 0; left: 0; right: 0; bottom: auto; width: auto;
+    /* bottom:0 은 iOS 에서 하단 툴바/홈 인디케이터 뒤까지 내려가 탭 바가 가려진다.
+       svh = 툴바가 펼쳐진 상태의 "항상 보이는" 높이. 미지원 브라우저는 100% 로 대체 */
+    height: 100%;
+    height: 100svh;
     display: flex; flex-direction: column;
+  }
+  @supports not (height: 100svh) {
+    body { bottom: 0; height: auto; }
   }
   /* 키보드가 올라온 동안만 JS가 잰 보이는 높이를 쓴다 */
   body.m-typing { bottom: auto; height: var(--app-h, 100%); }
@@ -345,15 +352,6 @@
   .input-hint { display: none; }
   .btn-xs, .btn-icon-xs { min-height: 32px; }
   .terminal-body { padding-bottom: 72px; font-size: 0.85rem; }
-
-  /* 키보드 위 단축키 줄 */
-  .m-keys { display: none; flex: 0 0 auto; gap: 4px; padding: 6px 8px; background: #e5e7eb; }
-  body.m-typing .m-keys { display: flex; }
-  .m-keys button {
-    flex: 1; min-height: 40px; border: none; border-radius: 8px;
-    background: #fff; color: var(--text-main);
-    font-family: var(--font-mono); font-size: 0.95rem; box-shadow: 0 1px 0 #cbd5e1;
-  }
 
   /* ---------- ③ 비교 ---------- */
   .diff-workspace { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden; flex-direction: column; -webkit-overflow-scrolling: touch; }

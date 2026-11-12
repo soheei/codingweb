@@ -194,7 +194,7 @@ export function setupMobile() {
     setTermTab("out");
   });
 
-  // 코드 입력 중에는 화면 아래 영역(결과·탭)을 숨기고 단축키 줄을 보여 준다
+  // 코드 입력 중에는 화면 아래 영역(결과·탭)을 숨긴다
   let blurTimer = null;
   const view = $("standard-view");
   view.addEventListener("focusin", (e) => {
@@ -208,15 +208,6 @@ export function setupMobile() {
       if (!document.activeElement?.closest?.(".CodeMirror")) document.body.classList.remove("m-typing");
       STATE.editor?.refresh();
     }, 200);
-  });
-  // 단축키: 누를 때 에디터가 포커스를 잃어 키보드가 닫히지 않도록 기본 동작을 막는다
-  $("m-keys").querySelectorAll("button").forEach(b => {
-    b.addEventListener("pointerdown", (e) => e.preventDefault());
-    b.addEventListener("click", () => {
-      if (!STATE.editor || STATE.editor.getOption("readOnly")) return;
-      STATE.editor.replaceSelection(b.dataset.k);
-      STATE.editor.focus();
-    });
   });
 
   // 처음 화면: 저장된 비교 화면이 있으면 비교, 아니면 코드
