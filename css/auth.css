@@ -101,6 +101,7 @@ body.auth-locked .main-container { visibility: hidden; }
   padding: 8px;
 }
 .owner-dd-menu.open { display: block; }
+.owner-dd-backdrop { display: none; } /* 모바일에서만 사용 (mobile.css) */
 .owner-dd-search { width: 100%; padding: 6px 9px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font: inherit; font-size: 0.8rem; margin-bottom: 6px; outline: none; }
 .owner-dd-list { max-height: 260px; overflow: auto; }
 .owner-dd-item { padding: 7px 9px; border-radius: var(--radius-sm); font-size: 0.82rem; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }

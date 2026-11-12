@@ -250,11 +250,15 @@ export function renderMemberTabs() {
     <div class="owner-dd-menu">
       <input type="text" class="owner-dd-search" placeholder="이름 검색..." spellcheck="false">
       <div class="owner-dd-list"></div>
-    </div>`;
+    </div>
+    <div class="owner-dd-backdrop"></div>`;
   const btn = dd.querySelector(".owner-dd-btn");
   const menu = dd.querySelector(".owner-dd-menu");
   const list = dd.querySelector(".owner-dd-list");
   const search = dd.querySelector(".owner-dd-search");
+  // 모바일: 창 바깥의 어두운 부분(실제 요소)을 누르면 닫는다.
+  // iOS Safari 는 일반 영역을 눌러도 click 이 document 까지 올라오지 않아서, 눌리는 요소를 따로 둔다
+  dd.querySelector(".owner-dd-backdrop").addEventListener("click", (e) => { e.stopPropagation(); menu.classList.remove("open"); });
   const renderList = () => {
     const q = search.value.trim().toLowerCase();
     const others = STATE.users.filter(u => u.uid !== STATE.me.uid && u.displayName.toLowerCase().includes(q));
@@ -277,6 +281,7 @@ export function renderMemberTabs() {
       renderList(); search.value = "";
       // 모바일에서는 목록을 열자마자 키보드가 올라와 가리지 않도록, 검색창을 직접 누를 때까지 포커스하지 않는다
       if (!window.matchMedia("(max-width: 860px)").matches) search.focus();
+      else if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur(); // 이미 열려 있던 키보드도 내린다
     }
   });
   search.addEventListener("input", renderList);

@@ -300,13 +300,18 @@
   .editor-header .owner-dd-btn { width: 36px; padding: 0; justify-content: center; gap: 0; font-size: 0; color: #2563eb; }
   .editor-header .owner-dd-btn i { font-size: 0.9rem; }
   .editor-header .owner-dd-btn .fa-caret-down { display: none; }
-  /* 화면 가운데에 뜨는 창 (바깥의 어두운 부분을 누르면 닫힌다) */
+  /* 창 바깥의 어두운 배경: 실제 요소라서 누르면 닫힌다 (이전에는 box-shadow 로만 어둡게 해서 눌러도 반응하지 않았다) */
+  .owner-dd-menu.open + .owner-dd-backdrop {
+    display: block; position: fixed; inset: 0; z-index: 1099;
+    background: rgba(15, 18, 26, 0.5); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  /* 화면 가운데에 뜨는 창 */
   .owner-dd-menu {
     position: fixed; left: 50%; top: 50%; right: auto; bottom: auto;
     transform: translate(-50%, -50%);
     width: min(92vw, 360px); max-height: 70vh; overflow: auto; z-index: 1100;
     padding: 12px; border-radius: 16px;
-    box-shadow: 0 0 0 100vmax rgba(15, 18, 26, 0.5), 0 16px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
   }
   .owner-dd-list { max-height: 50vh; }
   /* sticky 인 .owner-dd 가 자체 쌓임 순서를 만들어서, 열린 창이 아래의 코드 입력창·하단 탭에 가려졌다.
