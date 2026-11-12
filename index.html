@@ -540,39 +540,151 @@
     </div>
   </div>
 
-  <!-- 진단용: 주소 뒤에 ?debug=1 을 붙였을 때만 동작 (화면 높이/안전영역 실측값 표시) -->
+  <!-- 진단용: 주소 뒤에 ?debug=1 을 붙였을 때만 동작. 화면 높이/안전영역/탭 바 위치 실측값과 영역 테두리를 보여 준다.
+       레이아웃에는 영향을 주지 않는다 (패널·측정용 요소는 position:fixed, 테두리는 outline 이라 크기가 변하지 않음) -->
   <script>
   (function () {
-    if (!/[?&]debug=1/.test(location.search)) return;
+    if (!/[?&]debug=1(&|$)/.test(location.search)) return;
+    var NL = String.fromCharCode(10);
+
+    // 영역 경계: body=빨강 실선, 본문(.main-container)=파랑 점선, 탭 바=초록 실선, 헤더=주황 점선
+    // outline 은 박스 크기·위치를 바꾸지 않는다
+    var st = document.createElement("style");
+    st.textContent =
+      "body{outline:3px solid #ef4444!important;outline-offset:-3px!important}" +
+      ".main-container{outline:3px dashed #3b82f6!important;outline-offset:-3px!important}" +
+      ".m-nav{outline:3px solid #22c55e!important;outline-offset:-3px!important}" +
+      ".app-header{outline:2px dotted #f97316!important;outline-offset:-2px!important}";
+    document.head.appendChild(st);
+
+    // 단위 실측용 (화면 밖, 보이지 않음)
     var probe = document.createElement("div");
+    probe.setAttribute("aria-hidden", "true");
     probe.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;visibility:hidden;pointer-events:none";
-    probe.innerHTML = '<div id="p-dvh" style="height:100dvh"></div><div id="p-svh" style="height:100svh"></div><div id="p-lvh" style="height:100lvh"></div><div id="p-sab" style="height:env(safe-area-inset-bottom,0px)"></div><div id="p-sat" style="height:env(safe-area-inset-top,0px)"></div>';
-    var box = document.createElement("pre");
-    box.style.cssText = "position:fixed;left:6px;top:70px;z-index:5000;margin:0;padding:6px 8px;max-width:calc(100vw - 12px);background:rgba(0,0,0,.82);color:#7CFC9A;font:11px/1.35 monospace;white-space:pre-wrap;border-radius:6px";
-    function h(id) { return Math.round(document.getElementById(id).getBoundingClientRect().height); }
-    function r(el) { if (!el) return "(없음)"; var b = el.getBoundingClientRect(); return "top " + Math.round(b.top) + " / bottom " + Math.round(b.bottom) + " / h " + Math.round(b.height); }
-    function update() {
-      var vv = window.visualViewport, nav = document.getElementById("m-nav");
-      box.textContent = [
-        "innerW×H: " + innerWidth + "×" + innerHeight + "   screen: " + screen.width + "×" + screen.height,
-        "visualViewport: h " + (vv ? Math.round(vv.height) : "-") + " / top " + (vv ? Math.round(vv.offsetTop) : "-") + " / scale " + (vv ? vv.scale : "-"),
-        "dvh " + h("p-dvh") + "  svh " + h("p-svh") + "  lvh " + h("p-lvh"),
-        "safe-area bottom " + h("p-sab") + "  top " + h("p-sat"),
-        "body: " + r(document.body),
-        "m-nav: " + r(nav),
-        "nav padding-bottom: " + (nav ? getComputedStyle(nav).paddingBottom : "-"),
-        "standalone: " + (navigator.standalone === true) + " / display-mode: " + (matchMedia("(display-mode: standalone)").matches ? "standalone" : "browser"),
-        "mpane: " + document.body.dataset.mpane + "  (탭하면 숨김)"
-      ].join("
-");
-    }
-    box.addEventListener("click", function () { box.style.display = "none"; });
-    document.addEventListener("DOMContentLoaded", function () {
-      document.body.appendChild(probe); document.body.appendChild(box);
-      update(); setInterval(update, 500);
-      window.addEventListener("resize", update);
-      if (window.visualViewport) { visualViewport.addEventListener("resize", update); visualViewport.addEventListener("scroll", update); }
+    probe.innerHTML =
+      '<div data-p="vh" style="position:absolute;height:100vh"></div>' +
+      '<div data-p="dvh" style="position:absolute;height:100dvh"></div>' +
+      '<div data-p="svh" style="position:absolute;height:100svh"></div>' +
+      '<div data-p="lvh" style="position:absolute;height:100lvh"></div>' +
+      '<div data-p="sat" style="position:absolute;height:env(safe-area-inset-top,0px)"></div>' +
+      '<div data-p="sab" style="position:absolute;height:env(safe-area-inset-bottom,0px)"></div>';
+
+    var wrap = document.createElement("div");
+    wrap.id = "debug-panel";
+    wrap.style.cssText = "position:fixed;left:6px;right:6px;top:64px;z-index:5000;background:rgba(0,0,0,.85);color:#7CFC9A;border-radius:8px;font:11px/1.4 ui-monospace,Menlo,monospace";
+    var bar = document.createElement("div");
+    bar.style.cssText = "display:flex;gap:6px;padding:6px 6px 0";
+    var btnCopy = document.createElement("button");
+    var btnFold = document.createElement("button");
+    [btnCopy, btnFold].forEach(function (b) {
+      b.type = "button";
+      b.style.cssText = "flex:none;padding:4px 10px;border:0;border-radius:6px;background:#2563eb;color:#fff;font:600 12px sans-serif";
     });
+    btnCopy.textContent = "값 복사";
+    btnFold.textContent = "접기";
+    var pre = document.createElement("pre");
+    pre.style.cssText = "margin:0;padding:6px 8px 8px;white-space:pre-wrap;word-break:break-all;max-height:46vh;overflow:auto";
+    bar.appendChild(btnCopy);
+    bar.appendChild(btnFold);
+    wrap.appendChild(bar);
+    wrap.appendChild(pre);
+
+    function ph(k) {
+      var e = probe.querySelector('[data-p="' + k + '"]');
+      return e ? Math.round(e.getBoundingClientRect().height) : "-";
+    }
+    function rc(el) {
+      if (!el) return null;
+      var b = el.getBoundingClientRect();
+      return { top: Math.round(b.top), bottom: Math.round(b.bottom), h: Math.round(b.height) };
+    }
+    function fr(r) { return r ? "top " + r.top + " / bottom " + r.bottom + " / h " + r.h : "(없음)"; }
+
+    var text = "";
+    function update() {
+      var vv = window.visualViewport, d = document.documentElement, body = document.body;
+      var nav = document.getElementById("m-nav");
+      var main = document.querySelector(".main-container");
+      var head = document.querySelector(".app-header");
+      var cs = getComputedStyle(body), ncs = nav ? getComputedStyle(nav) : null;
+      var rb = rc(body), rn = rc(nav), rm = rc(main), rh = rc(head);
+      var vvBottom = vv ? Math.round(vv.offsetTop + vv.height) : null;
+      var near = [];
+      ["vh", "dvh", "svh", "lvh"].forEach(function (k) { if (rb && Math.abs(ph(k) - rb.h) <= 1) near.push(k); });
+      var mode = matchMedia("(display-mode: standalone)").matches ? "standalone"
+        : matchMedia("(display-mode: fullscreen)").matches ? "fullscreen" : "browser";
+      text = [
+        "[viewport]",
+        "innerWidth x innerHeight: " + innerWidth + " x " + innerHeight,
+        "documentElement.clientHeight: " + d.clientHeight,
+        "screen: " + screen.width + " x " + screen.height + "  dpr " + devicePixelRatio,
+        "visualViewport: h " + (vv ? Math.round(vv.height) : "-") + " / offsetTop " + (vv ? Math.round(vv.offsetTop) : "-") +
+          " / scale " + (vv ? vv.scale : "-") + " / bottom " + (vvBottom === null ? "-" : vvBottom),
+        "100vh " + ph("vh") + " | 100dvh " + ph("dvh") + " | 100svh " + ph("svh") + " | 100lvh " + ph("lvh"),
+        "safe-area top " + ph("sat") + " | bottom " + ph("sab"),
+        "[elements]",
+        "body: " + fr(rb) + "  (computed height " + cs.height + ", position " + cs.position + ")",
+        "  body 높이와 같은 단위: " + (near.length ? near.join(", ") : "없음"),
+        "header: " + fr(rh),
+        "main(.main-container): " + fr(rm),
+        "m-nav: " + fr(rn) + (ncs ? "  (display " + ncs.display + ", padding-bottom " + ncs.paddingBottom + ")" : ""),
+        "[판정용 차이: 양수면 아래로 넘침]",
+        "nav.bottom - innerHeight: " + (rn ? rn.bottom - innerHeight : "-"),
+        "nav.bottom - vv.bottom: " + (rn && vvBottom !== null ? rn.bottom - vvBottom : "-"),
+        "body.bottom - innerHeight: " + (rb ? rb.bottom - innerHeight : "-"),
+        "[mode]",
+        "display-mode: " + mode + " / navigator.standalone: " + navigator.standalone,
+        "mobile rule (max-width:860px): " + matchMedia("(max-width: 860px)").matches +
+          " / mpane: " + body.dataset.mpane + " / m-typing: " + body.classList.contains("m-typing"),
+        "scrollY: " + Math.round(window.scrollY) + " / body.scrollTop: " + body.scrollTop,
+        "UA: " + navigator.userAgent,
+        "time: " + new Date().toLocaleTimeString()
+      ].join(NL);
+      pre.textContent = text;
+    }
+
+    function copy() {
+      var done = function () {
+        btnCopy.textContent = "복사됨";
+        setTimeout(function () { btnCopy.textContent = "값 복사"; }, 1500);
+      };
+      var fallback = function () {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+        document.documentElement.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        try { document.execCommand("copy"); done(); } catch (e) { btnCopy.textContent = "복사 실패"; }
+        ta.remove();
+      };
+      update();
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback);
+      else fallback();
+    }
+    btnCopy.addEventListener("click", copy);
+    btnFold.addEventListener("click", function () {
+      var hidden = pre.style.display === "none";
+      pre.style.display = hidden ? "" : "none";
+      btnFold.textContent = hidden ? "접기" : "펼치기";
+    });
+
+    function start() {
+      document.documentElement.appendChild(probe);
+      document.documentElement.appendChild(wrap);
+      update();
+      setInterval(update, 500);
+      window.addEventListener("resize", update);
+      window.addEventListener("scroll", update, true);
+      window.addEventListener("orientationchange", function () { setTimeout(update, 300); });
+      if (window.visualViewport) {
+        visualViewport.addEventListener("resize", update);
+        visualViewport.addEventListener("scroll", update);
+      }
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+    else start();
   })();
   </script>
   <script type="module" src="js/main.js?v=20261112_02"></script>
