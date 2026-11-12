@@ -273,7 +273,11 @@ export function renderMemberTabs() {
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
     menu.classList.toggle("open");
-    if (menu.classList.contains("open")) { renderList(); search.value = ""; search.focus(); }
+    if (menu.classList.contains("open")) {
+      renderList(); search.value = "";
+      // 모바일에서는 목록을 열자마자 키보드가 올라와 가리지 않도록, 검색창을 직접 누를 때까지 포커스하지 않는다
+      if (!window.matchMedia("(max-width: 860px)").matches) search.focus();
+    }
   });
   search.addEventListener("input", renderList);
   search.addEventListener("click", e => e.stopPropagation());

@@ -31,6 +31,14 @@ export function loadCompareSelection() {
   }
 }
 
+// 앱을 켠 직후 서버가 아직 깨어나는 중이면 사용자 목록을 못 받아 저장된 선택이 걸러져 비어 버린다.
+// 나중에 목록을 받았는데 선택이 비어 있으면(사용자가 직접 비운 경우는 저장값도 비어 있다) 저장값에서 다시 복원한다. 복원했으면 true.
+export function restoreSelectionIfEmpty() {
+  if (STATE.compareUids.length) return false;
+  loadCompareSelection();
+  return STATE.compareUids.length > 0;
+}
+
 export function saveCompareSelection() {
   try { localStorage.setItem(storageKey(), JSON.stringify(STATE.compareUids)); } catch (e) { /* 무시 */ }
 }

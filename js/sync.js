@@ -1,4 +1,4 @@
-import { renderCompareView, saveCompareSelection } from './compare.js';
+import { renderCompareView, restoreSelectionIfEmpty, saveCompareSelection } from './compare.js';
 import { API_BASE, STATE } from './config.js';
 import { loadCurrentMemberCode, renderMemberTabs, renderSidebarQuestions, updateProgress } from './navigation.js';
 import { fetchSolutions, loadUsers, saveLocal } from './storage.js';
@@ -13,7 +13,9 @@ export function setupServerPolling() {
 
   const refreshUsers = () => loadUsers().then(({ pinsChanged, viewReset }) => {
     if (pinsChanged) saveCompareSelection();
-    if (pinsChanged || viewReset) {
+    // 모바일: 시작할 때 사용자 목록을 못 받아 비어 있던 "전에 고른 사람"을 저장값에서 되살린다
+    const restored = window.matchMedia("(max-width: 860px)").matches && restoreSelectionIfEmpty();
+    if (restored || pinsChanged || viewReset) {
       renderMemberTabs();
       if (viewReset) { loadCurrentMemberCode(); updateProgress(); }
       if (STATE.isDiffMode) renderCompareView();
