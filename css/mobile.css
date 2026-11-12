@@ -415,3 +415,18 @@
   .quad-diff-grid .resize-handle { display: none !important; }
   .btn-sm { min-height: 34px; }
 }
+
+/* ==========================================================================
+   [임시 안전장치 · 진단용] 홈 화면 웹앱(standalone)에서만 탭 바 아래 여백을 최소 20px 보장.
+   - 기존 값 calc(6px + safe-area) 보다 작아지는 일은 없다 (max 로 큰 쪽을 쓴다)
+   - Safari 브라우저 모드 / 데스크톱 / 안드로이드에는 적용되지 않는다
+     (안드로이드에 설치한 웹앱도 display-mode 가 standalone 이라, iOS WebKit 만 지원하는
+      -webkit-touch-callout 으로 한 번 더 거른다)
+   - 20px 는 추정값이다. 이 규칙으로 아이콘이 올라오면 "safe-area-inset-bottom 이 0 으로 계산되던 것",
+     그대로면 "body 가 화면보다 길어 탭 바가 화면 밖으로 밀린 것" 쪽이 원인이다. 원인 확정 후 제거/교체한다
+   ========================================================================== */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 860px) and (display-mode: standalone) {
+    .m-nav { padding-bottom: max(calc(6px + env(safe-area-inset-bottom, 0px)), 20px); }
+  }
+}

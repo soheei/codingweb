@@ -45,7 +45,7 @@
   <link rel="stylesheet" href="css/auth.css?v=20261110_04">
   <link rel="stylesheet" href="css/responsive.css?v=20261103_03">
   <link rel="stylesheet" href="css/clean.css?v=20261112_01">
-  <link rel="stylesheet" href="css/mobile.css?v=20261112_03">
+  <link rel="stylesheet" href="css/mobile.css?v=20261112_04">
 </head>
 <body class="ivory-theme" data-mpane="list">
   <!-- 첫 화면 로딩 (CSS/JS 번들 없이 이 파일만으로 동작). 서버가 잠들어 있으면 응답이 늦을 수 있다 -->
@@ -660,6 +660,7 @@
         "body.bottom - innerHeight: " + (rb ? rb.bottom - innerHeight : "-"),
         "[mode]",
         "display-mode: " + mode + " / navigator.standalone: " + navigator.standalone,
+        "standalone 안전장치(탭 바 아래 최소 20px) 적용: " + (CSS.supports("-webkit-touch-callout", "none") && matchMedia("(max-width: 860px) and (display-mode: standalone)").matches),
         "mobile rule (max-width:860px): " + matchMedia("(max-width: 860px)").matches +
           " / mpane: " + body.dataset.mpane + " / m-typing: " + body.classList.contains("m-typing"),
         "scrollY: " + Math.round(window.scrollY) + " / body.scrollTop: " + body.scrollTop,
