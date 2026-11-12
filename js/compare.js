@@ -1,4 +1,5 @@
 import { DEFAULT_CODE, MAX_COMPARE, MIN_COMPARE, STATE, moveItem, sortFavoritesFirst, toggleFavorite, STORAGE_KEY_COMPARE, escapeHtml, isMe, nameOf } from './config.js';
+import { apiFetch } from './auth.js';
 import { fetchSolutions, executeSave, updateSaveStatus } from './storage.js';
 import { loadCurrentMemberCode, renderMemberTabs, saveViewState, switchOwner } from './navigation.js';
 import { showToast } from './ui.js';
@@ -22,13 +23,41 @@ export const compareList = () => [STATE.me.uid, ...STATE.compareUids];
 /* ---------------------------------------------------------------- 선택 기억 */
 const storageKey = () => `${STORAGE_KEY_COMPARE}_${STATE.me.uid}`;
 
+const isMobileView = () => window.matchMedia("(max-width: 860px)").matches;
+
+// 저장된 "전에 고른 사람". 모바일은 서버(내 프로필)에 저장된 값을 우선 쓴다:
+// 앱을 종료해도, Safari/홈 화면 앱/다른 기기에서도 같은 선택이 유지된다. 서버에 아직 없으면 이 기기에 저장된 값을 쓴다.
+function readSavedUids() {
+  if (isMobileView() && Array.isArray(STATE.me?.compareUids)) return STATE.me.compareUids;
+  try { return JSON.parse(localStorage.getItem(storageKey()) || "[]"); } catch (e) { return []; }
+}
+
 export function loadCompareSelection() {
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKey()) || "[]");
-    STATE.compareUids = saved.filter(uid => STATE.users.some(u => u.uid === uid) && uid !== STATE.me.uid).slice(0, MAX_COMPARE - 1);
+    const saved = readSavedUids();
+    STATE.compareUids = saved.filter(uid => typeof uid === "string" && STATE.users.some(u => u.uid === uid) && uid !== STATE.me.uid).slice(0, MAX_COMPARE - 1);
   } catch (e) {
     STATE.compareUids = [];
   }
+  // 서버에는 아직 없고 이 기기에만 있던 선택은 한 번 서버로 올린다 (기존 사용자 이전)
+  if (isMobileView() && !Array.isArray(STATE.me?.compareUids) && STATE.compareUids.length) pushSelectionToServer();
+}
+
+// 서버 저장: 짧은 시간에 여러 번 바뀌어도 마지막 값만 보낸다. 실패해도 이 기기 저장값이 남아 있으니 조용히 넘어간다
+let pushTimer = null;
+function pushSelectionToServer() {
+  if (!isMobileView() || !STATE.me) return;
+  const uids = [...STATE.compareUids];
+  STATE.me.compareUids = uids; // 이번 실행 중에도 최신 값을 기준으로 복원되게
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    apiFetch("/api/profile", { method: "PATCH", body: { compareUids: uids } }).catch(() => { /* 무시 */ });
+  }, 400);
+}
+
+export function saveCompareSelection() {
+  try { localStorage.setItem(storageKey(), JSON.stringify(STATE.compareUids)); } catch (e) { /* 무시 */ }
+  pushSelectionToServer();
 }
 
 // 앱을 켠 직후 서버가 아직 깨어나는 중이면 사용자 목록을 못 받아 저장된 선택이 걸러져 비어 버린다.
@@ -37,10 +66,6 @@ export function restoreSelectionIfEmpty() {
   if (STATE.compareUids.length) return false;
   loadCompareSelection();
   return STATE.compareUids.length > 0;
-}
-
-export function saveCompareSelection() {
-  try { localStorage.setItem(storageKey(), JSON.stringify(STATE.compareUids)); } catch (e) { /* 무시 */ }
 }
 
 /* ---------------------------------------------------------------- 비교 대상 선택 모달 */

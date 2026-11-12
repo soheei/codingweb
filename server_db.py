@@ -527,6 +527,33 @@ def _throttled(key):
     return len(fails) >= LOGIN_MAX_FAILS
 
 
+MAX_COMPARE_UIDS = 5  # 나를 뺀 최대 비교 인원 (프런트 MAX_COMPARE - 1)
+
+
+def _clean_compare_uids(value):
+    """클라이언트가 보낸 비교 대상 목록을 검증한다. 문자열 uid 만, 중복 제거, 최대 5명."""
+    if not isinstance(value, list):
+        raise ApiError(400, "bad_compare", "비교 대상 목록이 올바르지 않습니다")
+    out = []
+    for uid in value:
+        if not isinstance(uid, str) or not (0 < len(uid) <= 128):
+            raise ApiError(400, "bad_compare", "비교 대상 목록이 올바르지 않습니다")
+        if uid not in out:
+            out.append(uid)
+    if len(out) > MAX_COMPARE_UIDS:
+        raise ApiError(400, "bad_compare", f"비교 대상은 최대 {MAX_COMPARE_UIDS}명까지입니다")
+    return out
+
+
+def _saved_compare_uids(user):
+    """저장된 비교 대상. 한 번도 저장한 적이 없으면 None (빈 목록으로 저장한 경우는 [])."""
+    comp = user.get("compare")
+    if not isinstance(comp, dict):
+        return None
+    uids = comp.get("uids")
+    return [u for u in uids if isinstance(u, str)] if isinstance(uids, list) else []
+
+
 def _profile_public(uid, user):
     return {"uid": uid, "displayName": user.get("displayName", ""), "loginId": user.get("loginId")}
 
@@ -662,6 +689,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         out["email"] = _email_public(claims)
         out["tempPassword"] = bool(user.get("tempPassword"))
         out["provider"] = (claims.get("firebase") or {}).get("sign_in_provider")
+        out["compareUids"] = _saved_compare_uids(user)  # None = 아직 저장한 적 없음
         self._json(200, out)
 
     def _users(self):
@@ -866,9 +894,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     updates[f"users/{uid}/loginId"] = new_id
             if data.get("tempPasswordDone"):
                 updates[f"users/{uid}/tempPassword"] = None
+            only_compare = False
+            if "compareUids" in data:
+                uids = _clean_compare_uids(data["compareUids"])
+                # 빈 목록도 "비웠다"는 뜻으로 남긴다 (RTDB 는 빈 배열을 지우므로 at 만 저장)
+                updates[f"users/{uid}/compare"] = {"uids": uids, "at": int(time.time())} if uids else {"at": int(time.time())}
+                only_compare = set(data.keys()) <= {"compareUids"}
             db_update(updates)
             user = db_get(f"users/{uid}") or user
-            _cache_put_user(uid, user)
+            # 비교 대상만 바뀐 경우는 다른 사람 화면의 사용자 목록을 다시 받게 할 필요가 없다
+            _cache_put_user(uid, user, bump=not only_compare)
         self._json(200, _profile_public(uid, user))
 
     def _save_solution(self):
